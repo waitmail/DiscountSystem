@@ -1401,6 +1401,93 @@ namespace DiscountSystem
             return result;
         }
 
+        public class ChangeStatusClients : IDisposable
+        {
+            public string NickShop { get; set; }
+            public string NumCash { get; set; }
+            public List<ChangeStatusClient> ListChangeStatusClient { get; set; }
+
+            void IDisposable.Dispose()
+            {
+
+            }
+        }
+
+        public class ChangeStatusClient
+        {          
+            public string Client { get; set; }
+            public string DateTimeChangeStatus { get; set; }
+        }
+        
+        [WebMethod]
+        public string UploadChangeStatusClients(string nick_shop, string data)
+        {
+            string result = "-1";
+
+            string code_shop = get_id_database(nick_shop);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+            ChangeStatusClients changeStatusClients = JsonConvert.DeserializeObject<ChangeStatusClients>(decrypt_data);
+            StringBuilder sb = new StringBuilder();
+            foreach (ChangeStatusClient changeStatusClient in changeStatusClients.ListChangeStatusClient)
+            {
+                sb.Append("DELETE FROM client_changed_type WHERE "+
+                    "client='"+ changeStatusClient.Client+"' AND "+
+                    "shop='"+ changeStatusClients.NickShop+"' AND "+
+                    "num_cash="+changeStatusClients.NumCash+" AND "+
+                    "date_time='"+changeStatusClient.DateTimeChangeStatus+"';");
+                sb.Append("INSERT INTO client_changed_type(" +
+                    "date_time" +
+                    ",client" +
+                    ",shop" +
+                    ",num_cash" +
+                    ",processed) VALUES('" +
+                    changeStatusClient.DateTimeChangeStatus + "','"+
+                    changeStatusClient.Client + "','" +
+                    changeStatusClients.NickShop + "'," +
+                    changeStatusClients.NumCash + "," +
+                    "0)");// processed)
+            }
+
+            SqlConnection conn = new SqlConnection(getConnectionString());
+            SqlTransaction tran = null;
+            try
+            {
+                if (sb.ToString().Trim() != "")
+                {
+                    conn.Open();
+                    tran = conn.BeginTransaction();
+                    string query = sb.ToString();
+                    SqlCommand command = new SqlCommand(query, conn);
+                    command.Transaction = tran;
+                    command.ExecuteNonQuery();
+                    tran.Commit();
+                    command.Dispose();
+                    conn.Close();
+                }
+                result = "1";
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                if (conn.State == ConnectionState.Open)
+                {
+                    conn.Close();
+                }
+            }
+
+            return result;
+        }
+
         public class PhoneClient
         {
             public string NumPhone { get; set; }
@@ -1420,6 +1507,7 @@ namespace DiscountSystem
 
             }
         }
+
 
         [WebMethod]
         public string UploadPhoneClients(string nick_shop, string data)
