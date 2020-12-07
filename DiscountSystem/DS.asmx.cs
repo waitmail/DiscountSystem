@@ -1417,6 +1417,8 @@ namespace DiscountSystem
         {          
             public string Client { get; set; }
             public string DateTimeChangeStatus { get; set; }
+            public string new_phone_number { get; set; }
+
         }
         
         [WebMethod]
@@ -1441,18 +1443,21 @@ namespace DiscountSystem
                     "client='"+ changeStatusClient.Client+"' AND "+
                     "shop='"+ changeStatusClients.NickShop+"' AND "+
                     "num_cash="+changeStatusClients.NumCash+" AND "+
-                    "date_time='"+changeStatusClient.DateTimeChangeStatus+"';");
+                    "date_time='"+changeStatusClient.DateTimeChangeStatus+"' AND "+
+                    "new_phone_number='"+changeStatusClient.new_phone_number+"';");
                 sb.Append("INSERT INTO client_changed_type(" +
                     "date_time" +
                     ",client" +
                     ",shop" +
                     ",num_cash" +
-                    ",processed) VALUES('" +
+                    ",processed,"+
+                    "new_phone_number) VALUES('" +
                     changeStatusClient.DateTimeChangeStatus + "','"+
                     changeStatusClient.Client + "','" +
                     changeStatusClients.NickShop + "'," +
                     changeStatusClients.NumCash + "," +
-                    "0)");// processed)
+                    "0,'"+
+                    changeStatusClient.new_phone_number+"')");// processed)
             }
 
             SqlConnection conn = new SqlConnection(getConnectionString());
