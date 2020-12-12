@@ -1714,6 +1714,7 @@ namespace DiscountSystem
             public string PromoCode { get; set; }
             public string SumBonus { get; set; }
             public string ExecutionOrder { get; set; }
+            public string GiftPrice { get; set; }
             
 
             void IDisposable.Dispose()
@@ -1893,7 +1894,7 @@ namespace DiscountSystem
                             " present,mark,disc_only,time_start,time_end " +
                             " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
                             " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
-                            " ,sum_bonus,execution_order " +
+                            " ,sum_bonus,execution_order,gift_price " +
                             " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
                             " LEFT JOIN action_header ON action_active.num_doc = action_header.num_doc ";
 
@@ -1930,6 +1931,7 @@ namespace DiscountSystem
                             actionHeader.PromoCode = reader["promo_code"].ToString().Trim();
                             actionHeader.SumBonus = reader["sum_bonus"].ToString().Trim();
                             actionHeader.ExecutionOrder = reader["execution_order"].ToString().Trim();
+                            actionHeader.ExecutionOrder = reader["gift_price"].ToString().Replace(",", ".");
 
                             loadPacketData.ListActionHeader.Add(actionHeader);
                         }
