@@ -746,7 +746,7 @@ namespace DiscountSystem
                 StringBuilder result_query = new StringBuilder();
                 conn.Open();
                 //string query = "SELECT code,name,sum,birthday,type_card,its_work  FROM clients WHERE datetime_update > '" + datetime.AddDays(-1).ToString("dd-MM-yyyy HH:mm:ss") + "'";
-                string query = " SELECT TOP 1000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
+                string query = " SELECT TOP 10000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
                 SqlCommand command = new SqlCommand(query, conn);
                 SqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
