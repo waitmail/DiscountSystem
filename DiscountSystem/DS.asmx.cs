@@ -1931,7 +1931,7 @@ namespace DiscountSystem
                             actionHeader.PromoCode = reader["promo_code"].ToString().Trim();
                             actionHeader.SumBonus = reader["sum_bonus"].ToString().Trim();
                             actionHeader.ExecutionOrder = reader["execution_order"].ToString().Trim();
-                            actionHeader.ExecutionOrder = reader["gift_price"].ToString().Replace(",", ".");
+                            actionHeader.GiftPrice = reader["gift_price"].ToString().Replace(",", ".");
 
                             loadPacketData.ListActionHeader.Add(actionHeader);
                         }
