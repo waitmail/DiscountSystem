@@ -1572,6 +1572,124 @@ namespace DiscountSystem
             return result;
         }
 
+
+
+        /// <summary>
+        /// Уменьшенное количестов в чеке
+        /// или удаленная строка
+        /// </summary>
+        public class DeletedItem
+        {
+            public string num_doc { get; set; }
+            public string num_cash { get; set; }
+            public string date_time_start { get; set; }
+            public string date_time_action { get; set; }
+            public string tovar { get; set; }
+            public string quantity { get; set; }
+            public string type_of_operation { get; set; }
+        }
+
+        public class DeletedItems : IDisposable
+        {
+            public string Version { get; set; }
+            public string NickShop { get; set; }
+            public string CodeShop { get; set; }
+            public List<DeletedItem> ListDeletedItem { get; set; }
+
+            void IDisposable.Dispose()
+            {
+
+            }
+        }
+
+
+
+        [WebMethod]
+        public string UploadDeletedItems(string nick_shop, string data)
+        {
+
+            string result = "-1";
+
+            string code_shop = get_id_database(nick_shop);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+            DeletedItems deletedItems = JsonConvert.DeserializeObject<DeletedItems>(decrypt_data);
+
+            StringBuilder sb = new StringBuilder();
+            foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
+            {
+                sb.Append("DELETE FROM deleted_items WHERE " +
+                    "shop='" + nick_shop +
+                    "' AND num_doc=" + deletedItem.num_doc +
+                    "  AND num_cash=" + deletedItem.num_cash +
+                    "  AND date_time_start='" + deletedItem.date_time_start +
+                    "' AND date_time_action='" + deletedItem.date_time_action +
+                    "' AND tovar=" + deletedItem.tovar +
+                    "  AND quantity=" + deletedItem.quantity +
+                    "  AND type_of_operation=" + deletedItem.type_of_operation+";");
+
+                sb.Append("INSERT INTO deleted_items" +
+                    "    (shop" +
+                    "    ,num_doc" +
+                    "    ,num_cash" +
+                    "    ,date_time_start" +
+                    "    ,date_time_action" +
+                    "    ,tovar" +
+                    "    ,quantity" +
+                    "    ,type_of_operation)" +
+                    "    VALUES ('" +
+                         nick_shop + "'," +
+                         deletedItem.num_doc + "," +
+                         deletedItem.num_cash + ",'" +
+                          deletedItem.date_time_start + "','" +
+                          deletedItem.date_time_action + "'," +
+                          deletedItem.tovar + "," +
+                          deletedItem.quantity + "," +
+                          deletedItem.type_of_operation + ");");
+            }
+
+            SqlConnection conn = new SqlConnection(getConnectionString());
+            SqlTransaction tran = null;
+            try
+            {
+                if (sb.ToString().Trim() != "")
+                {
+                    conn.Open();
+                    tran = conn.BeginTransaction();
+                    string query = sb.ToString();
+                    SqlCommand command = new SqlCommand(query, conn);
+                    command.Transaction = tran;
+                    command.ExecuteNonQuery();
+                    tran.Commit();
+                    command.Dispose();
+                    conn.Close();
+                }
+                result = "1";
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                if (conn.State == ConnectionState.Open)
+                {
+                    conn.Close();
+                }
+            }
+
+            return result;
+
+
+        }
+            
+
         /// <summary>
         /// 
         /// </summary>
