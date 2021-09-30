@@ -927,10 +927,11 @@ namespace DiscountSystem
       
         private string getConnectionString()
         {
-            //string result = "Server=AP-35\\SQLEXPRESS;User Id=ch_disc_sql_tranzit;Password=511660;Database=ch_disc_tranzit;";
-            string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;";
-            //string result = "Server=127.0.0.1;User Id=ch_disc_sql_tranzit;Password=Sql0412755;Database=cash;";
+            //string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; РАБОЧАЯ
 
+            string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;";
+            //string result = "Server=10.21.200.79;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //тестовый адрес EVA
+            
             return result;
         }
 
@@ -1349,7 +1350,7 @@ namespace DiscountSystem
                 command.Dispose();
                 result = true;
             }
-            catch
+            catch(Exception ex)
             {
                 if (tran != null)
                 {
@@ -2885,10 +2886,11 @@ namespace DiscountSystem
         }
 
 
-        public class PassPromo
+        public class LoginPassPromo
         {
             public string PassPromoForCashDeskNumber { get; set; }
             public string CashDeskNumber { get; set; }
+            public string LoginPromoForCashDeskNumber { get; set; }
         }
 
         [WebMethod]
@@ -2904,29 +2906,31 @@ namespace DiscountSystem
             string count_day = CryptorEngine.get_count_day();
             string key = nick_shop.Trim() + count_day.Trim() + nick_shop.Trim();
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
-            PassPromo passPromo = JsonConvert.DeserializeObject<PassPromo>(decrypt_data);
+            LoginPassPromo passPromo = JsonConvert.DeserializeObject<LoginPassPromo>(decrypt_data);
                         
             SqlConnection conn = new SqlConnection(getConnectionString());
             try
             {
                 conn.Open();
-                string query = "SELECT password FROM cashbox WHERE shop='"+nick_shop+"'  AND num_cash='"+passPromo.CashDeskNumber+"'";
+                string query = "SELECT login,password FROM cashbox WHERE shop='"+nick_shop+"'  AND num_cash='"+passPromo.CashDeskNumber+"'";
                 SqlCommand command = new SqlCommand(query, conn);
                 SqlDataReader reader = command.ExecuteReader();
-                string resul_query = "";
+                //string resul_query = "";
                 while (reader.Read())
                 {
-                    resul_query = reader["password"].ToString().Trim();
+                    //resul_query = reader["password"].ToString().Trim();
+                    passPromo.PassPromoForCashDeskNumber = reader["password"].ToString().Trim();
+                    passPromo.LoginPromoForCashDeskNumber = reader["login"].ToString().Trim();
                 }
                 
-                if (resul_query != "")
-                {
-                    passPromo.PassPromoForCashDeskNumber = resul_query;
-                }
-                else
-                {
-                    passPromo.PassPromoForCashDeskNumber = "";
-                }
+                //if (resul_query != "")
+                //{
+                //    passPromo.PassPromoForCashDeskNumber = resul_query;
+                //}
+                //else
+                //{
+                //    passPromo.PassPromoForCashDeskNumber = "";
+                //}
                 command.Dispose();
                 conn.Close();
                 string jason = JsonConvert.SerializeObject(passPromo, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
