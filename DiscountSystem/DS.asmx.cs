@@ -677,7 +677,7 @@ namespace DiscountSystem
                 conn.Close();
 
             }
-            catch (SqlException)
+            catch (SqlException ex)
             {
                 if (trans != null)
                 {
@@ -2753,7 +2753,8 @@ namespace DiscountSystem
                                                     "num_str,"+
                                                     "bonus_stand,"+
                                                     "bonus_prom,"+
-                                                    "promotion_b_mover)" +
+                                                    "promotion_b_mover,"+
+                                                    "marking_code)" +
                                             "VALUES('"+spt.Shop+"',"+
                                             spt.Num_doc+","+
                                             spt.Num_cash+","+
@@ -2771,7 +2772,8 @@ namespace DiscountSystem
                                             spt.Num_str+","+
                                             spt.Bonus_stand+","+
                                             spt.Bonus_prom+","+
-                                            spt.Promotion_b_mover+")";
+                                            spt.Promotion_b_mover+",'"+
+                                            spt.MarkingCode+"')";
                     query_insert_data_on_sales.Append(s);
 
 
@@ -2842,6 +2844,7 @@ namespace DiscountSystem
             public string Bonus_stand { get; set; }
             public string Bonus_prom { get; set; }
             public string Promotion_b_mover { get; set; }
+            public string MarkingCode { get; set; }
         }
                 
         /// <summary>
