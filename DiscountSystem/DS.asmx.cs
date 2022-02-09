@@ -927,10 +927,9 @@ namespace DiscountSystem
       
         private string getConnectionString()
         {
-            //string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; РАБОЧАЯ
-
+            //string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //РАБОЧАЯ
             string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;";
-            //string result = "Server=10.21.200.79;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //тестовый адрес EVA
+            //string result = "Server=10.21.200.78;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //тестовый адрес EVA
             
             return result;
         }
@@ -2705,7 +2704,8 @@ namespace DiscountSystem
                                                 "transactionId," +
                                                 "transactionIdSales," +
                                                 "clientInfo_vatin,"+
-                                                "clientInfo_name)" +
+                                                "clientInfo_name,"+
+                                                "sum_cash_remainder)" +
                                                 " VALUES('" + sph.Shop + "'," +
                                                 sph.Num_doc + "," +
                                                 sph.Num_cash + ",'" +
@@ -2731,7 +2731,8 @@ namespace DiscountSystem
                                                 sph.Id_transaction+"','"+
                                                 sph.Id_transaction_sale+"','"+
                                                 sph.ClientInfo_vatin+"','"+
-                                                sph.ClientInfo_name+"')";
+                                                sph.ClientInfo_name+"',"+
+                                                sph.SumCashRemainder+")";
                     query_insert_data_on_sales.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
@@ -2823,6 +2824,7 @@ namespace DiscountSystem
             public string Id_transaction_sale { get; set; }
             public string ClientInfo_vatin { get; set; }
             public string ClientInfo_name { get; set; }
+            public string SumCashRemainder { get; set; }
         }
         public class SalesPortionsTable
         {
