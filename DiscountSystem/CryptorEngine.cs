@@ -46,7 +46,11 @@ namespace DiscountSystem
         public static string Encrypt(string toEncrypt, bool useHashing, string key)
         {
             byte[] keyArray;
+            //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "1" + "\r\n");
+            //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", toEncrypt.Length.ToString() + "\r\n");
+            //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Str.txt", toEncrypt);
             byte[] toEncryptArray = UTF8Encoding.UTF8.GetBytes(toEncrypt);
+            //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "2" + "\r\n");
 
             System.Configuration.AppSettingsReader settingsReader = new AppSettingsReader();
             // Get the key from config file
@@ -54,23 +58,24 @@ namespace DiscountSystem
             //System.Windows.Forms.MessageBox.Show(key);
             if (useHashing)
             {
+                //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "3" + "\r\n");
                 MD5CryptoServiceProvider hashmd5 = new MD5CryptoServiceProvider();
                 keyArray = hashmd5.ComputeHash(UTF8Encoding.UTF8.GetBytes(key));
                 hashmd5.Clear();
+                //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "4" + "\r\n");
             }
             else
             {
-                keyArray = UTF8Encoding.UTF8.GetBytes(key);
+                keyArray = UTF8Encoding.UTF8.GetBytes(key);                
             }
-
-            TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider();
-            tdes.Key = keyArray;
-            tdes.Mode = CipherMode.ECB;
+                        
+            TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider();            
+            tdes.Key = keyArray;            
+            tdes.Mode = CipherMode.ECB;            
             tdes.Padding = PaddingMode.PKCS7;
-
-            ICryptoTransform cTransform = tdes.CreateEncryptor();
-            byte[] resultArray = cTransform.TransformFinalBlock(toEncryptArray, 0, toEncryptArray.Length);
-            tdes.Clear();
+            ICryptoTransform cTransform = tdes.CreateEncryptor();            
+            byte[] resultArray = cTransform.TransformFinalBlock(toEncryptArray, 0, toEncryptArray.Length);            
+            tdes.Clear();            
             return Convert.ToBase64String(resultArray, 0, resultArray.Length);
         }
         /// <summary>

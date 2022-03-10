@@ -784,6 +784,9 @@ namespace DiscountSystem
         {
             string result = "";
 
+            //nick_shop = "11109";
+            //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
+
             string code_shop = get_id_database(nick_shop);
             if (code_shop.Trim().Length == 0)
             {
@@ -794,7 +797,6 @@ namespace DiscountSystem
             string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
             string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
             string[] d = decrypt_data.ToString().Split('|');
-
 
             string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
             if (File.Exists(path_for_distr))
@@ -930,7 +932,8 @@ namespace DiscountSystem
             //string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //РАБОЧАЯ
             string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;";
             //string result = "Server=10.21.200.78;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //тестовый адрес EVA
-            
+            //string result = "Server=10.21.200.21\\V81C;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //тестовый адрес EVA
+
             return result;
         }
 
@@ -1370,8 +1373,7 @@ namespace DiscountSystem
         }
 
         private bool check_avalible_dataV8()
-        {
-           
+        {            
             SqlConnection conn = new SqlConnection(getConnectionString());
             bool result = false;
 
@@ -1383,12 +1385,13 @@ namespace DiscountSystem
                 object result_query = command.ExecuteScalar();
                 if (result_query != null)
                 {
-                    result = Convert.ToBoolean(result_query);
+                    result = Convert.ToBoolean(result_query);                    
                 }
+                //File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", (result_query == null).ToString()+"\r\n");
             }
-            catch
-            {
-
+            catch(Exception ex)
+            {                
+                
             }
             finally
             {
@@ -1397,7 +1400,7 @@ namespace DiscountSystem
                     conn.Close();
                 }
             }
-
+            //File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "Возвращаемое значение "+result.ToString()+"\r\n");
             return result;
         }
 
@@ -1933,18 +1936,20 @@ namespace DiscountSystem
             DateTime dt_start = DateTime.Now;
             //string result = "-1";
             Byte[] result = Encoding.UTF8.GetBytes("-1");
-
-
+                        
             if (check_avalible_dataV8())
-            {
+            {                
+                //insert_errors_GetDataForCasheV8Jason(nick_shop, "2", "check_avalible_dataV8");                
                 return result = Encoding.UTF8.GetBytes("-1");
             }
             
             string code_shop = get_id_database(nick_shop);
             if (code_shop.Trim().Length == 0)
             {
-                return result = Encoding.UTF8.GetBytes("-1");
+                //insert_errors_GetDataForCasheV8Jason(nick_shop, "2", " нема кода ");                
+                return result = Encoding.UTF8.GetBytes("-2");
             }
+            
 
             string count_day = CryptorEngine.get_count_day();
             string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();           
@@ -1960,7 +1965,7 @@ namespace DiscountSystem
                 try
                 {
 
-                    conn.Open();
+                    conn.Open();                    
                     string query = "SELECT nabor.code,nabor.name, ISNULL(nabor.price,0)  AS retail_price, " +
                         " nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus AS percent_bonus,ISNULL(nabor.tnved,'') AS tnved,nabor.its_marked AS its_marked " +
                         " FROM (SELECT tovar.code,tovar.name,prices.price,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked FROM tovar " +
@@ -1970,6 +1975,7 @@ namespace DiscountSystem
                     SqlCommand command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     SqlDataReader reader = command.ExecuteReader();
+                    
                     loadPacketData.ListTovar = new List<Tovar>();
                     while (reader.Read())
                     {
@@ -1996,6 +2002,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
+                    
                     loadPacketData.ListBarcode = new List<Barcode>();
                     while (reader.Read())
                     {
@@ -2019,6 +2026,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
+                    
                     loadPacketData.ListActionHeader = new List<ActionHeader>();
                     while (reader.Read())
                     {
@@ -2066,6 +2074,7 @@ namespace DiscountSystem
                     //command.CommandTimeout = 300;
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
+                    
                     loadPacketData.ListActionTable = new List<ActionTable>();
                     while (reader.Read())
                     {
@@ -2086,6 +2095,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
+                    
                     loadPacketData.ListCharacteristic = new List<Characteristic>();
                     while (reader.Read())
                     {
@@ -2104,6 +2114,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
+                    
                     loadPacketData.ListSertificate = new List<Sertificate>();
                     while (reader.Read())
                     {
@@ -2127,6 +2138,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
+                    
                     int numstr = 1;
                     while (reader.Read())
                     {
@@ -2145,6 +2157,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
+                    
                     loadPacketData.ListActionClients = new List<ActionClients>();
                     while (reader.Read())
                     {
@@ -2163,31 +2176,45 @@ namespace DiscountSystem
                     loadPacketData.Threshold = Convert.ToInt32(command.ExecuteScalar());
 
                     conn.Close();
+                    
                     loadPacketData.PacketIsFull = true;
                     if (check_avalible_dataV8())
                     {
                         loadPacketData.Exchange = true;
                     }
-                    string jason = JsonConvert.SerializeObject(loadPacketData, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-                    string jason_encrypt = CryptorEngine.Encrypt(jason, true, key);
+                    //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "1" + "\r\n");
+                    //StringBuilder sb = new StringBuilder();
+                    //StringWriter sw = new StringWriter(sb);
+                    ////System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "2" + "\r\n");
+                    //using (JsonWriter textWriter = new JsonTextWriter(sw))
+                    //{
+                    //    var serializer = new JsonSerializer();
+                    //    serializer.Serialize(textWriter, loadPacketData);
+                    //}
+                    //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "3" + "\r\n");
+                    string jason = JsonConvert.SerializeObject(loadPacketData, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });                    
+
+                    string jason_encrypt = CryptorEngine.Encrypt(jason, true, key);                    
                     result = CompressString(jason_encrypt);
-                    DateTime dt_finish = DateTime.Now;
                     
+                    DateTime dt_finish = DateTime.Now;                    
                     query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
-                        "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";
-                    execute_insert_query(query, 2);
+                        "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";                    
+                    execute_insert_query(query, 2);                    
                 }
                 catch (SqlException ex)
                 {
                     //return "-1"; здесь ничего не делаем 
                     //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
                     insert_errors_GetDataForCasheV8Jason(nick_shop, "1", ex.Message);
+                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "25" + "\r\n");
                 }
                 catch (Exception ex)
                 {
                     //return "-1"; здесь ничего не делаем 
                     //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
                     insert_errors_GetDataForCasheV8Jason(nick_shop, "2", ex.Message);
+                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + "\r\n");
                 }
                 finally
                 {
@@ -2660,7 +2687,7 @@ namespace DiscountSystem
             StringBuilder query_insert_data_on_sales = new StringBuilder();
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             SalesPortions salesPortions = JsonConvert.DeserializeObject <SalesPortions>(decrypt_data);
-            if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop))
+            if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop.Trim()))
             {
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
                 {
@@ -2705,7 +2732,8 @@ namespace DiscountSystem
                                                 "transactionIdSales," +
                                                 "clientInfo_vatin,"+
                                                 "clientInfo_name,"+
-                                                "sum_cash_remainder)" +
+                                                "sum_cash_remainder,"+
+                                                "num_order)" +
                                                 " VALUES('" + sph.Shop + "'," +
                                                 sph.Num_doc + "," +
                                                 sph.Num_cash + ",'" +
@@ -2732,7 +2760,8 @@ namespace DiscountSystem
                                                 sph.Id_transaction_sale+"','"+
                                                 sph.ClientInfo_vatin+"','"+
                                                 sph.ClientInfo_name+"',"+
-                                                sph.SumCashRemainder+")";
+                                                sph.SumCashRemainder+","+
+                                                sph.NumOrder+")";
                     query_insert_data_on_sales.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
@@ -2825,6 +2854,7 @@ namespace DiscountSystem
             public string ClientInfo_vatin { get; set; }
             public string ClientInfo_name { get; set; }
             public string SumCashRemainder { get; set; }
+            public string NumOrder { get; set; }
         }
         public class SalesPortionsTable
         {
@@ -2877,7 +2907,7 @@ namespace DiscountSystem
             }
             catch (SqlException ex)
             {
-
+                //File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + "\r\n");
             }
             finally
             {
