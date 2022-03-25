@@ -670,10 +670,7 @@ namespace DiscountSystem
 
                     command = new SqlCommand(query, conn);
                     command.Transaction = trans;
-                    command.ExecuteNonQuery();
-
-
-                    
+                    command.ExecuteNonQuery();                    
                 }
                 trans.Commit();
                 conn.Close();
@@ -781,15 +778,58 @@ namespace DiscountSystem
 
 
 
+        //[WebMethod]
+        //public string ExistsUpdateProrgam(string nick_shop, string data, string scheme)
+        //{
+        //    string result = "";
+
+        //    //nick_shop = "11109";
+        //    //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
+
+        //    string code_shop = get_id_database(nick_shop, scheme);
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        return result;
+        //    }
+
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+        //    string[] d = decrypt_data.ToString().Split('|');
+
+        //    string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
+        //    if (File.Exists(path_for_distr))
+        //    {
+        //        FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
+        //        string cash_version = myFileVersionInfo.FileVersion;
+        //        //Новое решение 
+        //        Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
+        //        Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
+        //        if (local_version > remote_version)
+        //        {
+        //            result = cash_version;
+        //        }
+        //        else
+        //        {
+        //            result = d[1];
+        //        }
+
+        //        result = CryptorEngine.Encrypt(result, true, key);
+
+        //    }
+
+        //    return result;
+        //}
+
         [WebMethod]
-        public string ExistsUpdateProrgam(string nick_shop, string data,string scheme)
+        public string ExistsUpdateProrgam(string nick_shop, string data)
         {
             string result = "";
 
             //nick_shop = "11109";
             //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
 
-            string code_shop = get_id_database(nick_shop, scheme);
+            string code_shop = get_id_database(nick_shop, "1");
             if (code_shop.Trim().Length == 0)
             {
                 return result;
@@ -825,12 +865,43 @@ namespace DiscountSystem
             return result;
         }
 
+        //[WebMethod]
+        //public byte[] GetUpdateProgram(string nick_shop, string data, string scheme)
+        //{
+        //    byte[] result = new byte[0];
+
+        //    string code_shop = get_id_database(nick_shop, scheme);
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        return result;
+        //    }
+
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+        //    string[] d = decrypt_data.ToString().Split('|');
+        //    string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
+        //    if (File.Exists(path_for_distr))
+        //    {
+        //        FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
+        //        string cash_version = myFileVersionInfo.FileVersion;
+        //        Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
+        //        Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
+        //        if (local_version == remote_version)
+        //        {
+        //            result = File.ReadAllBytes(path_for_distr);
+        //        }
+        //    }
+
+        //    return result;
+        //}
+
         [WebMethod]
-        public byte[] GetUpdateProgram(string nick_shop, string data, string scheme)
+        public byte[] GetUpdateProgram(string nick_shop, string data)
         {
             byte[] result = new byte[0];
-            
-            string code_shop = get_id_database(nick_shop, scheme);
+
+            string code_shop = get_id_database(nick_shop, "1");
             if (code_shop.Trim().Length == 0)
             {
                 return result;
@@ -844,17 +915,18 @@ namespace DiscountSystem
             if (File.Exists(path_for_distr))
             {
                 FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
-                string cash_version = myFileVersionInfo.FileVersion;               
+                string cash_version = myFileVersionInfo.FileVersion;
                 Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
                 Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
                 if (local_version == remote_version)
                 {
                     result = File.ReadAllBytes(path_for_distr);
                 }
-            }            
-         
+            }
+
             return result;
         }
+
 
 
         [WebMethod]
@@ -905,7 +977,7 @@ namespace DiscountSystem
             SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
             try
             {
-                string query = "SELECT is_active FROM certificate WHERE code_tovar="+decrypt_data;
+                string query = "SELECT is_active FROM certificate WHERE code="+decrypt_data;
                 conn.Open();
                 SqlCommand command = new SqlCommand(query,conn);
                 object result_query = command.ExecuteScalar();
@@ -1383,9 +1455,9 @@ namespace DiscountSystem
             return result;
         }
 
-        private bool check_avalible_dataV8()
-        {            
-            SqlConnection conn = new SqlConnection(getConnectionString());
+        private bool check_avalible_dataV8(string scheme)
+        {
+            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
             bool result = false;
 
             try
@@ -1948,7 +2020,7 @@ namespace DiscountSystem
             //string result = "-1";
             Byte[] result = Encoding.UTF8.GetBytes("-1");
                         
-            if (check_avalible_dataV8())
+            if (check_avalible_dataV8(scheme))
             {                
                 //insert_errors_GetDataForCasheV8Jason(nick_shop, "2", "check_avalible_dataV8");                
                 return result = Encoding.UTF8.GetBytes("-1");
@@ -2190,7 +2262,7 @@ namespace DiscountSystem
                     conn.Close();
                     
                     loadPacketData.PacketIsFull = true;
-                    if (check_avalible_dataV8())
+                    if (check_avalible_dataV8(scheme))
                     {
                         loadPacketData.Exchange = true;
                     }
@@ -2275,11 +2347,11 @@ namespace DiscountSystem
         #endregion
 
         [WebMethod]
-        public string GetDataForCasheV8Successfully(string nick_shop, string data)
+        public string GetDataForCasheV8Successfully(string nick_shop, string data,string scheme)
         {
             string result = "1";
 
-            if (check_avalible_dataV8())
+            if (check_avalible_dataV8(scheme))
             {
                 return result = "-1";
             }
@@ -2343,11 +2415,11 @@ namespace DiscountSystem
 
 
         [WebMethod]
-        public string OnlineCasheV8Successfully(string nick_shop, string data)
+        public string OnlineCasheV8Successfully(string nick_shop, string data,string scheme)
         {
             string result = "1";
 
-            if (check_avalible_dataV8())
+            if (check_avalible_dataV8(scheme))
             {
                 return result = "-1";
             }
@@ -2431,7 +2503,7 @@ namespace DiscountSystem
             Byte[] result = Encoding.UTF8.GetBytes("-1");
 
 
-            if (check_avalible_dataV8())
+            if (check_avalible_dataV8(scheme))
             {
                 return result = Encoding.UTF8.GetBytes("-1");
             }
@@ -2652,7 +2724,7 @@ namespace DiscountSystem
 
                     conn.Close();
                     loadPacketData.PacketIsFull = true;
-                    if (check_avalible_dataV8())
+                    if (check_avalible_dataV8(scheme))
                     {
                         loadPacketData.Exchange = true;
                     }
