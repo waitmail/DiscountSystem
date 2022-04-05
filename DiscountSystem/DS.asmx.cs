@@ -778,58 +778,15 @@ namespace DiscountSystem
 
 
 
-        //[WebMethod]
-        //public string ExistsUpdateProrgam(string nick_shop, string data, string scheme)
-        //{
-        //    string result = "";
-
-        //    //nick_shop = "11109";
-        //    //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
-
-        //    string code_shop = get_id_database(nick_shop, scheme);
-        //    if (code_shop.Trim().Length == 0)
-        //    {
-        //        return result;
-        //    }
-
-        //    string count_day = CryptorEngine.get_count_day();
-        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
-        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
-        //    string[] d = decrypt_data.ToString().Split('|');
-
-        //    string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
-        //    if (File.Exists(path_for_distr))
-        //    {
-        //        FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
-        //        string cash_version = myFileVersionInfo.FileVersion;
-        //        //Новое решение 
-        //        Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
-        //        Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
-        //        if (local_version > remote_version)
-        //        {
-        //            result = cash_version;
-        //        }
-        //        else
-        //        {
-        //            result = d[1];
-        //        }
-
-        //        result = CryptorEngine.Encrypt(result, true, key);
-
-        //    }
-
-        //    return result;
-        //}
-
         [WebMethod]
-        public string ExistsUpdateProrgam(string nick_shop, string data)
+        public string ExistsUpdateProrgam(string nick_shop, string data, string scheme)
         {
             string result = "";
 
             //nick_shop = "11109";
             //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
 
-            string code_shop = get_id_database(nick_shop, "1");
+            string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
             {
                 return result;
@@ -861,47 +818,57 @@ namespace DiscountSystem
 
             }
 
-
             return result;
         }
 
-        //[WebMethod]
-        //public byte[] GetUpdateProgram(string nick_shop, string data, string scheme)
-        //{
-        //    byte[] result = new byte[0];
+            //[WebMethod]
+            //public string ExistsUpdateProrgam(string nick_shop, string data)
+            //{
+            //    string result = "";
 
-        //    string code_shop = get_id_database(nick_shop, scheme);
-        //    if (code_shop.Trim().Length == 0)
-        //    {
-        //        return result;
-        //    }
+            //    //nick_shop = "11109";
+            //    //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
 
-        //    string count_day = CryptorEngine.get_count_day();
-        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
-        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
-        //    string[] d = decrypt_data.ToString().Split('|');
-        //    string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
-        //    if (File.Exists(path_for_distr))
-        //    {
-        //        FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
-        //        string cash_version = myFileVersionInfo.FileVersion;
-        //        Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
-        //        Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
-        //        if (local_version == remote_version)
-        //        {
-        //            result = File.ReadAllBytes(path_for_distr);
-        //        }
-        //    }
+            //    string code_shop = get_id_database(nick_shop, "1");
+            //    if (code_shop.Trim().Length == 0)
+            //    {
+            //        return result;
+            //    }
 
-        //    return result;
-        //}
+            //    string count_day = CryptorEngine.get_count_day();
+            //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+            //    string[] d = decrypt_data.ToString().Split('|');
+
+            //    string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
+            //    if (File.Exists(path_for_distr))
+            //    {
+            //        FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
+            //        string cash_version = myFileVersionInfo.FileVersion;
+            //        //Новое решение 
+            //        Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
+            //        Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
+            //        if (local_version > remote_version)
+            //        {
+            //            result = cash_version;
+            //        }
+            //        else
+            //        {
+            //            result = d[1];
+            //        }
+
+            //        result = CryptorEngine.Encrypt(result, true, key);
+            //    }
+
+            //    return result;
+            //}
 
         [WebMethod]
-        public byte[] GetUpdateProgram(string nick_shop, string data)
+        public byte[] GetUpdateProgram(string nick_shop, string data, string scheme)
         {
             byte[] result = new byte[0];
 
-            string code_shop = get_id_database(nick_shop, "1");
+            string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
             {
                 return result;
@@ -926,6 +893,37 @@ namespace DiscountSystem
 
             return result;
         }
+
+        //[WebMethod]
+        //public byte[] GetUpdateProgram(string nick_shop, string data)
+        //{
+        //    byte[] result = new byte[0];
+
+        //    string code_shop = get_id_database(nick_shop, "1");
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        return result;
+        //    }
+
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+        //    string[] d = decrypt_data.ToString().Split('|');
+        //    string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
+        //    if (File.Exists(path_for_distr))
+        //    {
+        //        FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
+        //        string cash_version = myFileVersionInfo.FileVersion;
+        //        Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
+        //        Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
+        //        if (local_version == remote_version)
+        //        {
+        //            result = File.ReadAllBytes(path_for_distr);
+        //        }
+        //    }
+
+        //    return result;
+        //}
 
 
 
@@ -1012,8 +1010,9 @@ namespace DiscountSystem
         }
         private string getConnectionString2()
         {
+            string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_eva;"; //РАБОЧАЯ
             //string result = "Server=AP-35\\SQLEXPRESS;User Id=ch_disc_sql_tranzit;Password=511660;Database=ch_disc_tranzit;";
-            string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_eva;";
+            //string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_eva;";
             //string result = "Server=10.21.6.2;User Id=ch_disc_sql_tranzit;Password=Sql0412755;Database=cash;";
             //string result = "Server=10.21.6.2;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;";
 
@@ -1056,7 +1055,6 @@ namespace DiscountSystem
 
 
             string code_shop = get_id_database(nick_shop, scheme);
-
             if (code_shop.Trim().Length == 0)
             {
                 result = "-3";
@@ -2290,14 +2288,14 @@ namespace DiscountSystem
                 {
                     //return "-1"; здесь ничего не делаем 
                     //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
-                    insert_errors_GetDataForCasheV8Jason(nick_shop, "1", ex.Message);
-                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "25" + "\r\n");
+                    insert_errors_GetDataForCasheV8Jason(nick_shop, "1", ex.Message,scheme);
+                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + "\r\n");
                 }
                 catch (Exception ex)
                 {
                     //return "-1"; здесь ничего не делаем 
                     //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
-                    insert_errors_GetDataForCasheV8Jason(nick_shop, "2", ex.Message);
+                    insert_errors_GetDataForCasheV8Jason(nick_shop, "2", ex.Message,scheme);
                     File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + "\r\n");
                 }
                 finally
@@ -2313,9 +2311,9 @@ namespace DiscountSystem
 
 
         
-        private void insert_errors_GetDataForCasheV8Jason(string shop,string num_cash,string info)
+        private void insert_errors_GetDataForCasheV8Jason(string shop,string num_cash,string info,string scheme)
         {
-            SqlConnection conn = new SqlConnection(getConnectionString());
+            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
             try
             {
                 conn.Open();
@@ -2356,6 +2354,13 @@ namespace DiscountSystem
                 return result = "-1";
             }
 
+            //Проверка доступа 
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result = "-1";
+            }
+
             if (nick_shop.Trim().Length == 0)
             {
                 return result = "-1";
@@ -2369,7 +2374,7 @@ namespace DiscountSystem
             {
                 return result = "-1";
             }
-            SqlConnection conn = new SqlConnection(getConnectionString());
+            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
             try
             {
                 conn.Open();
@@ -2424,6 +2429,13 @@ namespace DiscountSystem
                 return result = "-1";
             }
 
+            //Проверка доступа 
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result = "-1";
+            }
+
             if (nick_shop.Trim().Length == 0)
             {
                 return result = "-1";
@@ -2437,7 +2449,8 @@ namespace DiscountSystem
             {
                 return result = "-1";
             }
-            SqlConnection conn = new SqlConnection(getConnectionString());
+            
+            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
             try
             {
                 conn.Open();
@@ -3016,6 +3029,13 @@ namespace DiscountSystem
             string result = "-1";           
 
             if (nick_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            //Проверка доступа 
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
             {
                 return result;
             }
