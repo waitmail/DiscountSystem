@@ -630,9 +630,18 @@ namespace DiscountSystem
 
                     if (decimal.Parse(param[2].Replace(".",",")) > 0)
                     {
-                        is_active =  "1";
-                        activation = "'" + param[0] + " " + descripton + "'";
-                        deactivation = "''";
+                        if (param[6] == "0")//Это продажа сертификата
+                        {
+                            is_active = "1";
+                            activation = "'" + param[0] + " " + descripton + "'";
+                            deactivation = "''";
+                        }
+                        else//Это возврат сертификата
+                        {
+                            is_active = "0";
+                            activation = "''";
+                            deactivation = "'" + param[0] + " " + descripton + "'";
+                        }
                     }
                     else
                     {
@@ -2830,7 +2839,8 @@ namespace DiscountSystem
                                                 "clientInfo_vatin,"+
                                                 "clientInfo_name,"+
                                                 "sum_cash_remainder,"+
-                                                "num_order)" +
+                                                "num_order,"+
+                                                "VizaD)" +
                                                 " VALUES('" + sph.Shop + "'," +
                                                 sph.Num_doc + "," +
                                                 sph.Num_cash + ",'" +
@@ -2858,7 +2868,8 @@ namespace DiscountSystem
                                                 sph.ClientInfo_vatin+"','"+
                                                 sph.ClientInfo_name+"',"+
                                                 sph.SumCashRemainder+","+
-                                                sph.NumOrder+")";
+                                                sph.NumOrder+","+
+                                                sph.VizaD+")";
                     query_insert_data_on_sales.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
@@ -2952,6 +2963,9 @@ namespace DiscountSystem
             public string ClientInfo_name { get; set; }
             public string SumCashRemainder { get; set; }
             public string NumOrder { get; set; }
+            public string VizaD { get; set; }
+
+
         }
         public class SalesPortionsTable
         {
