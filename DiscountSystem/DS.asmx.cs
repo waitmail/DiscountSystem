@@ -748,7 +748,8 @@ namespace DiscountSystem
 
             DateTime datetime = new DateTime(Convert.ToInt64(d[1]));
 
-            conn = new SqlConnection(getConnectionString());
+            //conn = new SqlConnection(getConnectionString2());
+            conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
             try
             {
                 StringBuilder result_query = new StringBuilder();
