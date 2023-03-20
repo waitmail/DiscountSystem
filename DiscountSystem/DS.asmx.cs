@@ -2244,7 +2244,7 @@ namespace DiscountSystem
                     }
                     reader.Close();
 
-                    query = " SELECT [action_clients].[num_doc],[code_client] FROM [dbo].[action_clients] " +
+                    query = " SELECT action_clients.num_doc,code_client FROM action_clients " +
                             " LEFT JOIN action_active ON action_clients.num_doc=action_active.num_doc AND action_active.shop='" + nick_shop + "'";
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
@@ -2318,8 +2318,7 @@ namespace DiscountSystem
             }
             return result;
         }
-
-
+        
         
         private void insert_errors_GetDataForCasheV8Jason(string shop,string num_cash,string info,string scheme)
         {
