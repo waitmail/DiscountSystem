@@ -1882,6 +1882,8 @@ namespace DiscountSystem
             public string PercentBonus { get; set; }
             public string TnVed { get; set; }
             public string ItsMarked { get; set; }
+            public string ItsExcise { get; set; }
+
 
 
             void IDisposable.Dispose()
@@ -1927,7 +1929,8 @@ namespace DiscountSystem
             public string SumBonus { get; set; }
             public string ExecutionOrder { get; set; }
             public string GiftPrice { get; set; }
-            
+            public string Kind { get; set; }
+
 
             void IDisposable.Dispose()
             {
@@ -2058,11 +2061,13 @@ namespace DiscountSystem
 
                     conn.Open();                    
                     string query = "SELECT nabor.code,nabor.name, ISNULL(nabor.price,0)  AS retail_price, " +
-                        " nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus AS percent_bonus,ISNULL(nabor.tnved,'') AS tnved,nabor.its_marked AS its_marked " +
-                        " FROM (SELECT tovar.code,tovar.name,prices.price,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked FROM tovar " +
+                        " nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus AS percent_bonus,"+
+                        " ISNULL(nabor.tnved,'') AS tnved,nabor.its_marked AS its_marked,nabor.its_excise AS its_excise " +
+                        " FROM (SELECT tovar.code,tovar.name,prices.price,tovar.its_deleted,tovar.nds,tovar.its_certificate,"+
+                        " tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise FROM tovar " +
                         " LEFT JOIN prices  ON  tovar.code = prices.tovar_code " +
                         " AND shop = '" + nick_shop + "'  AND prices.characteristic IS NULL)AS nabor " +// INSERT INTO sertificates(code, code_tovar, rating, is_active)VALUES (25000007,176684,500,0)
-                        " GROUP BY nabor.code,nabor.name,nabor.price,nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus,nabor.tnved,nabor.its_marked ";
+                        " GROUP BY nabor.code,nabor.name,nabor.price,nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus,nabor.tnved,nabor.its_marked,nabor.its_excise ";
                     SqlCommand command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     SqlDataReader reader = command.ExecuteReader();
@@ -2081,6 +2086,7 @@ namespace DiscountSystem
                             tovar.PercentBonus = reader["percent_bonus"].ToString().Replace(",", ".");
                             tovar.TnVed = reader["tnved"].ToString();
                             tovar.ItsMarked = reader["its_marked"].ToString();
+                            tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
                             loadPacketData.ListTovar.Add(tovar);
                         }
                     }
@@ -2111,7 +2117,7 @@ namespace DiscountSystem
                             " present,mark,disc_only,time_start,time_end " +
                             " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
                             " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
-                            " ,sum_bonus,execution_order,gift_price " +
+                            " ,sum_bonus,execution_order,gift_price,kind " +
                             " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
                             " LEFT JOIN action_header ON action_active.num_doc = action_header.num_doc ";
 
@@ -2150,6 +2156,7 @@ namespace DiscountSystem
                             actionHeader.SumBonus = reader["sum_bonus"].ToString().Trim();
                             actionHeader.ExecutionOrder = reader["execution_order"].ToString().Trim();
                             actionHeader.GiftPrice = reader["gift_price"].ToString().Replace(",", ".");
+                            actionHeader.Kind = reader["kind"].ToString();
 
                             loadPacketData.ListActionHeader.Add(actionHeader);
                         }
@@ -2601,7 +2608,7 @@ namespace DiscountSystem
                             " present,mark,disc_only,time_start,time_end " +
                             " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
                             " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
-                            " ,sum_bonus,execution_order " +
+                            " ,sum_bonus,execution_order,kind " +
                             " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
                             " LEFT JOIN action_header ON action_active.num_doc = action_header.num_doc ";
 
@@ -2637,6 +2644,7 @@ namespace DiscountSystem
                             actionHeader.PromoCode = reader["promo_code"].ToString().Trim();
                             actionHeader.SumBonus = reader["sum_bonus"].ToString().Trim();
                             actionHeader.ExecutionOrder = reader["execution_order"].ToString();
+                            actionHeader.Kind = reader["kind"].ToString(); 
 
                             loadPacketData.ListActionHeader.Add(actionHeader);
                         }
@@ -2840,7 +2848,11 @@ namespace DiscountSystem
                                                 "clientInfo_name,"+
                                                 "sum_cash_remainder,"+
                                                 "num_order,"+
-                                                "VizaD)" +
+                                                "VizaD,"+
+                                                "sno,"+
+                                                "sum_cash1,"+
+                                                "sum_terminal1," +
+                                                "sum_certificate1)" +
                                                 " VALUES('" + sph.Shop + "'," +
                                                 sph.Num_doc + "," +
                                                 sph.Num_cash + ",'" +
@@ -2869,7 +2881,11 @@ namespace DiscountSystem
                                                 sph.ClientInfo_name+"',"+
                                                 sph.SumCashRemainder+","+
                                                 sph.NumOrder+","+
-                                                sph.VizaD+")";
+                                                sph.VizaD+","+
+                                                sph.SystemTaxation+","+
+                                                sph.Sum_cash1+","+
+                                                sph.Sum_terminal1+","+
+                                                sph.Sum_certificate1+")";
                     query_insert_data_on_sales.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
@@ -2952,6 +2968,9 @@ namespace DiscountSystem
             public string Sum_cash { get; set; }
             public string Sum_terminal { get; set; }
             public string Sum_certificate { get; set; }
+            public string Sum_cash1 { get; set; }
+            public string Sum_terminal1 { get; set; }
+            public string Sum_certificate1 { get; set; }
             public string Date_time_start { get; set; }
             //public string Sales_assistant { get; set; }
             public string Comment { get; set; }
@@ -2964,6 +2983,7 @@ namespace DiscountSystem
             public string SumCashRemainder { get; set; }
             public string NumOrder { get; set; }
             public string VizaD { get; set; }
+            public string SystemTaxation { get; set; }
 
 
         }
