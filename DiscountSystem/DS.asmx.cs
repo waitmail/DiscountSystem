@@ -755,7 +755,7 @@ namespace DiscountSystem
                 StringBuilder result_query = new StringBuilder();
                 conn.Open();
                 //string query = "SELECT code,name,sum,birthday,type_card,its_work  FROM clients WHERE datetime_update > '" + datetime.AddDays(-1).ToString("dd-MM-yyyy HH:mm:ss") + "'";
-                string query = " SELECT TOP 10000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
+                string query = " SELECT TOP 10000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on,notify_security  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
                 SqlCommand command = new SqlCommand(query, conn);
                 SqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
@@ -764,7 +764,8 @@ namespace DiscountSystem
                          reader[2].ToString().Replace(",", ".") + ",'" + reader.GetDateTime(3).ToString("yyyy-MM-dd") + "'," +
                          reader[4].ToString() + "," + reader[5].ToString() + ",'" + reader.GetDateTime(6).ToString("yyyy-MM-dd HH:mm:ss") + "','" +
                          (reader[7].ToString().Trim() == "" ? "0" : reader[7].ToString()) + "','" +
-                         reader[8].ToString().Trim() + "'," + reader["bonus_is_on"].ToString().Trim());
+                         reader[8].ToString().Trim() + "','" + reader["bonus_is_on"].ToString().Trim() + "','" + 
+                         (reader["notify_security"].ToString().Trim()=="false" ? "0" : "1")+"'");
                 }
                 reader.Close();
                 conn.Close();
@@ -2114,7 +2115,7 @@ namespace DiscountSystem
                     reader.Close();
 
                     query = " SELECT date_start,date_end,action_active.num_doc,tip,barcode,persent,sum,comment, " +
-                            " present,mark,disc_only,time_start,time_end " +
+                            " mark,disc_only,time_start,time_end " +//" present,mark,disc_only,time_start,time_end " +
                             " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
                             " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
                             " ,sum_bonus,execution_order,gift_price,kind " +
@@ -2135,7 +2136,8 @@ namespace DiscountSystem
                             actionHeader.NumDoc = reader["num_doc"].ToString();
                             actionHeader.Tip = reader["tip"].ToString();
                             actionHeader.Barcode = reader["barcode"].ToString();
-                            actionHeader.CodeTovar = reader["present"].ToString().Replace(",", ".");
+                            //actionHeader.CodeTovar = reader["present"].ToString().Replace(",", ".");
+                            actionHeader.CodeTovar = "0";// reader["present"].ToString().Replace(",", ".");
                             actionHeader.Persent = reader["persent"].ToString().Replace(",", ".");
                             actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
                             actionHeader.Comment = reader["comment"].ToString().Trim();
@@ -2852,7 +2854,8 @@ namespace DiscountSystem
                                                 "sno,"+
                                                 "sum_cash1,"+
                                                 "sum_terminal1," +
-                                                "sum_certificate1)" +
+                                                "sum_certificate1," +
+                                                "guid)" +
                                                 " VALUES('" + sph.Shop + "'," +
                                                 sph.Num_doc + "," +
                                                 sph.Num_cash + ",'" +
@@ -2885,7 +2888,8 @@ namespace DiscountSystem
                                                 sph.SystemTaxation+","+
                                                 sph.Sum_cash1+","+
                                                 sph.Sum_terminal1+","+
-                                                sph.Sum_certificate1+")";
+                                                sph.Sum_certificate1+",'"+
+                                                sph.Guid+"')";
                     query_insert_data_on_sales.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
@@ -2908,7 +2912,8 @@ namespace DiscountSystem
                                                     "bonus_stand,"+
                                                     "bonus_prom,"+
                                                     "promotion_b_mover,"+
-                                                    "marking_code)" +
+                                                    "marking_code,"+
+                                                    "guid)" +
                                             "VALUES('"+spt.Shop+"',"+
                                             spt.Num_doc+","+
                                             spt.Num_cash+","+
@@ -2927,10 +2932,9 @@ namespace DiscountSystem
                                             spt.Bonus_stand+","+
                                             spt.Bonus_prom+","+
                                             spt.Promotion_b_mover+",'"+
-                                            spt.MarkingCode+"')";
+                                            spt.MarkingCode+"','"+
+                                            spt.Guid+"')";
                     query_insert_data_on_sales.Append(s);
-
-
                 }
                 //DateTime dt_start = DateTime.Now;
                 result = execute_insert_query(query_insert_data_on_sales.ToString(), 2, scheme);
@@ -2984,6 +2988,7 @@ namespace DiscountSystem
             public string NumOrder { get; set; }
             public string VizaD { get; set; }
             public string SystemTaxation { get; set; }
+            public string Guid { get; set; }
 
 
         }
@@ -3008,6 +3013,7 @@ namespace DiscountSystem
             public string Bonus_prom { get; set; }
             public string Promotion_b_mover { get; set; }
             public string MarkingCode { get; set; }
+            public string Guid { get; set; }
         }
                 
         /// <summary>
