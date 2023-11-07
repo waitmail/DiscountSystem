@@ -755,7 +755,7 @@ namespace DiscountSystem
                 StringBuilder result_query = new StringBuilder();
                 conn.Open();
                 //string query = "SELECT code,name,sum,birthday,type_card,its_work  FROM clients WHERE datetime_update > '" + datetime.AddDays(-1).ToString("dd-MM-yyyy HH:mm:ss") + "'";
-                string query = " SELECT TOP 10000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on,notify_security  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
+                string query = " SELECT TOP 10000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on,reason_for_blocking,notify_security  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
                 SqlCommand command = new SqlCommand(query, conn);
                 SqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
@@ -765,7 +765,8 @@ namespace DiscountSystem
                          reader[4].ToString() + "," + reader[5].ToString() + ",'" + reader.GetDateTime(6).ToString("yyyy-MM-dd HH:mm:ss") + "','" +
                          (reader[7].ToString().Trim() == "" ? "0" : reader[7].ToString()) + "','" +
                          reader[8].ToString().Trim() + "','" + reader["bonus_is_on"].ToString().Trim() + "','" + 
-                         (reader["notify_security"].ToString().Trim()=="false" ? "0" : "1")+"'");
+                         reader["reason_for_blocking"].ToString().Trim()+ "','" +
+                         (reader["notify_security"].ToString().Trim()=="False" ? "0" : "1")+"'");
                 }
                 reader.Close();
                 conn.Close();
@@ -1912,7 +1913,7 @@ namespace DiscountSystem
             public string Persent { get; set; }
             public string sum { get; set; }
             public string Comment { get; set; }
-            public string CodeTovar { get; set; }
+            //public string CodeTovar { get; set; }
             public string Marker { get; set; }
             public string ActionByDiscount { get; set; }
             public string TimeStart { get; set; }
@@ -1998,6 +1999,7 @@ namespace DiscountSystem
         {
             public string NickShop { get; set; }
             public string CodeShop { get; set; }
+            public string NumCash { get; set; }
             public string LastDateDownloadTovar { get; set; }
         }
         private Byte[] CompressString(string value)
@@ -2060,27 +2062,57 @@ namespace DiscountSystem
                 try
                 {
 
-                    conn.Open();                    
-                    string query = "SELECT nabor.code,nabor.name, ISNULL(nabor.price,0)  AS retail_price, " +
-                        " nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus AS percent_bonus,"+
-                        " ISNULL(nabor.tnved,'') AS tnved,nabor.its_marked AS its_marked,nabor.its_excise AS its_excise " +
-                        " FROM (SELECT tovar.code,tovar.name,prices.price,tovar.its_deleted,tovar.nds,tovar.its_certificate,"+
-                        " tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise FROM tovar " +
-                        " LEFT JOIN prices  ON  tovar.code = prices.tovar_code " +
-                        " AND shop = '" + nick_shop + "'  AND prices.characteristic IS NULL)AS nabor " +// INSERT INTO sertificates(code, code_tovar, rating, is_active)VALUES (25000007,176684,500,0)
-                        " GROUP BY nabor.code,nabor.name,nabor.price,nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus,nabor.tnved,nabor.its_marked,nabor.its_excise ";
+                    conn.Open();
+
+                    string query = "IF OBJECT_ID('tempdb..#t_t_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t_nick_shop_num_cash; " +
+                        " IF OBJECT_ID('tempdb..#t_t2_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t2_nick_shop_num_cash; " +
+                        " IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash; " +
+                        " SELECT prices_by_price_types.tovar_code AS tovar_code, prices_by_price_types.price AS prices_by_price_type INTO #t_t_nick_shop_num_cash from shops " +
+                        " LEFT JOIN prices_by_price_types ON shops.UID_type_of_prices = prices_by_price_types.UID_type_of_prices " +
+                        " WHERE shops.code = @nick_shop;" +                        
+                        " SELECT tovar.code,prices.price AS personal_price INTO #t_t2_nick_shop_num_cash " +
+                        " FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  AND prices.characteristic IS NULL  GROUP BY code,price " +
+                        " HAVING ISNULL(price, 0) > 0;" +
+                        " CREATE CLUSTERED INDEX tovar_code_index ON #t_t_nick_shop_num_cash (tovar_code ASC);" +
+                        " CREATE CLUSTERED INDEX code_index ON #t_t2_nick_shop_num_cash (code ASC);" +
+                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise," +
+                        " COALESCE(#t_t2_nick_shop_num_cash.code, #t_t_nick_shop_num_cash.tovar_code) AS code," +
+                        " CASE WHEN #t_t2_nick_shop_num_cash.personal_price IS NOT NULL THEN " +
+                        " #t_t2_nick_shop_num_cash.personal_price " +
+                        " ELSE " +
+                        " #t_t_nick_shop_num_cash.prices_by_price_type " +
+                        " END AS price  INTO #t_t3_nick_shop_num_cash " +
+                        " FROM  tovar LEFT JOIN #t_t_nick_shop_num_cash ON tovar.code =  #t_t_nick_shop_num_cash.tovar_code LEFT JOIN #t_t2_nick_shop_num_cash ON tovar.code =  #t_t2_nick_shop_num_cash.code " +
+                        " WHERE #t_t_nick_shop_num_cash.prices_by_price_type IS NOT NULL  OR #t_t2_nick_shop_num_cash.personal_price IS NOT NULL;" +
+                        " IF OBJECT_ID('tempdb..#t_t_nick_shop_num_cash') IS NOT NULL  DROP TABLE #t_t_nick_shop_num_cash;" +
+                        " IF OBJECT_ID('tempdb..#t_t2_nick_shop_num_cash') IS NOT NULL  DROP TABLE #t_t2_nick_shop_num_cash;" +
+                        " CREATE CLUSTERED INDEX code_index ON #t_t3_nick_shop_num_cash (code ASC);";
+
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+                    query = query.Replace("@nick_shop", "'"+nick_shop+"'");
+
+                    //INTO #t_t3_nick_shop_num_cash  
                     SqlCommand command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    command.ExecuteNonQuery();
+
+
+                    query = " SELECT * FROM #t_t3_nick_shop_num_cash ";
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+
+                    command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     SqlDataReader reader = command.ExecuteReader();
                     
                     loadPacketData.ListTovar = new List<Tovar>();
                     while (reader.Read())
                     {
+                        
                         using (Tovar tovar = new Tovar())
                         {
-                            tovar.Code = reader["code"].ToString();
+                            tovar.Code = reader["code"].ToString();                            
                             tovar.Name = reader["name"].ToString();
-                            tovar.RetailPrice = reader["retail_price"].ToString().Replace(",", ".");
+                            tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
                             tovar.ItsDeleted = reader["its_deleted"].ToString();
                             tovar.Nds = reader["nds"].ToString();
                             tovar.ItsCertificate = reader["its_certificate"].ToString();
@@ -2094,9 +2126,11 @@ namespace DiscountSystem
                     reader.Close();
 
                     query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode WHERE barcode.tovar_code in(" +
-                            " SELECT nabor.code FROM (SELECT tovar.code FROM tovar  " +
-                            " LEFT JOIN prices  ON  tovar.code = prices.tovar_code  AND shop = '" + nick_shop + "'   " +
-                            " AND (prices.characteristic IS NULL OR prices.characteristic='') WHERE prices.price>0 AND tovar.its_deleted=0)AS nabor)";
+                            " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
+                            //" IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+
+                    //query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode"; 
 
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
@@ -2137,7 +2171,7 @@ namespace DiscountSystem
                             actionHeader.Tip = reader["tip"].ToString();
                             actionHeader.Barcode = reader["barcode"].ToString();
                             //actionHeader.CodeTovar = reader["present"].ToString().Replace(",", ".");
-                            actionHeader.CodeTovar = "0";// reader["present"].ToString().Replace(",", ".");
+                            //actionHeader.CodeTovar = "0";// reader["present"].ToString().Replace(",", ".");
                             actionHeader.Persent = reader["persent"].ToString().Replace(",", ".");
                             actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
                             actionHeader.Comment = reader["comment"].ToString().Trim();
@@ -2168,8 +2202,10 @@ namespace DiscountSystem
                     query = " SELECT action_active.num_doc,action_table.num_list,action_table.tovar,action_table.price " +
                         " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
                         " LEFT JOIN action_table ON action_active.num_doc = action_table.num_doc  WHERE action_table.tovar IN " +
-                        "(SELECT tovar.code FROM tovar LEFT JOIN prices  ON  tovar.code = prices.tovar_code " +
-                        " where shop = '" + nick_shop + "')";
+                        "(SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash);"+
+                        "IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
+                    
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
 
                     command = new SqlCommand(query, conn);
                     //command.CommandTimeout = 300;
@@ -2397,7 +2433,7 @@ namespace DiscountSystem
             {
                 conn.Open();
                 string query = "UPDATE cashbox SET version = " + resultGetData.Version + " ,date_time_import = '" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'," +
-                                       "verOS='" + resultGetData.OSVersion +"',device_info='"+resultGetData .DeviceInfo+"' " +
+                                       "verOS='" + resultGetData.OSVersion +"',device_info='"+resultGetData.DeviceInfo+"' " +
                     " WHERE shop='" + nick_shop + "' AND num_cash=" + resultGetData.NumCash;
                 SqlCommand command = new SqlCommand(query, conn);
                 int result_update = command.ExecuteNonQuery();
@@ -2560,37 +2596,63 @@ namespace DiscountSystem
                 try
                 {
 
-                    conn.Open();
-                    string query = "SELECT nabor.code,nabor.name, ISNULL(nabor.price,0)  AS retail_price, " +
-                        " nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus AS percent_bonus,ISNULL(nabor.tnved,'') AS tnved, nabor.its_marked " +
-                        " FROM (SELECT tovar.code,tovar.name,prices.price,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked FROM tovar " +
-                        " LEFT JOIN prices  ON  tovar.code = prices.tovar_code " +
-                        " AND shop = '" + nick_shop + "'  AND prices.characteristic IS NULL WHERE tovar.datetime_update>'" + queryPacketData.LastDateDownloadTovar + "')AS nabor " +// INSERT INTO sertificates(code, code_tovar, rating, is_active)VALUES (25000007,176684,500,0)
-                        " GROUP BY nabor.code,nabor.name,nabor.price,nabor.its_deleted,nabor.nds,nabor.its_certificate,nabor.percent_bonus,nabor.tnved,nabor.its_marked ";
+                    conn.Open();                  
+                    string query = "IF OBJECT_ID('tempdb..#t_t_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t_nick_shop_num_cash; " +
+                        " IF OBJECT_ID('tempdb..#t_t2_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t2_nick_shop_num_cash; " +
+                        " IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash; " +
+                        " SELECT prices_by_price_types.tovar_code AS tovar_code, prices_by_price_types.price AS prices_by_price_type INTO #t_t_nick_shop_num_cash from shops " +
+                        " LEFT JOIN prices_by_price_types ON shops.UID_type_of_prices = prices_by_price_types.UID_type_of_prices " +
+                        " WHERE shops.code = @nick_shop AND prices_by_price_types.datetime_update>'" + queryPacketData.LastDateDownloadTovar + "';" +
+                        " SELECT tovar.code,prices.price AS personal_price INTO #t_t2_nick_shop_num_cash " +
+                        " FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  AND prices.characteristic IS NULL  "+
+                        " WHERE prices.datetime_update>'" + queryPacketData.LastDateDownloadTovar + "' GROUP BY code,price " +
+                        " HAVING ISNULL(price, 0) > 0;" +
+                        " CREATE CLUSTERED INDEX tovar_code_index ON #t_t_nick_shop_num_cash (tovar_code ASC);" +
+                        " CREATE CLUSTERED INDEX code_index ON #t_t2_nick_shop_num_cash (code ASC);" +
+                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise," +
+                        " COALESCE(#t_t2_nick_shop_num_cash.code, #t_t_nick_shop_num_cash.tovar_code) AS code," +
+                        " CASE WHEN #t_t2_nick_shop_num_cash.personal_price IS NOT NULL THEN " +
+                        " #t_t2_nick_shop_num_cash.personal_price " +
+                        " ELSE " +
+                        " ISNULL(#t_t_nick_shop_num_cash.prices_by_price_type,0) " +
+                        " END AS price  INTO #t_t3_nick_shop_num_cash " +
+                        " FROM  tovar LEFT JOIN #t_t_nick_shop_num_cash ON tovar.code =  #t_t_nick_shop_num_cash.tovar_code LEFT JOIN #t_t2_nick_shop_num_cash ON tovar.code =  #t_t2_nick_shop_num_cash.code " +
+                        " WHERE #t_t_nick_shop_num_cash.prices_by_price_type IS NOT NULL  OR #t_t2_nick_shop_num_cash.personal_price IS NOT NULL OR tovar.datetime_update>'"+ queryPacketData.LastDateDownloadTovar + "';" +
+                        " IF OBJECT_ID('tempdb..#t_t_nick_shop_num_cash') IS NOT NULL  DROP TABLE #t_t_nick_shop_num_cash;" +
+                        " IF OBJECT_ID('tempdb..#t_t2_nick_shop_num_cash') IS NOT NULL  DROP TABLE #t_t2_nick_shop_num_cash;" +
+                        " CREATE CLUSTERED INDEX code_index ON #t_t3_nick_shop_num_cash (code ASC);";
+
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+                    query = query.Replace("@nick_shop", "'" + nick_shop + "'");
+
                     SqlCommand command = new SqlCommand(query, conn);
                     SqlDataReader reader = command.ExecuteReader();
                     loadPacketData.ListTovar = new List<Tovar>();
                     while (reader.Read())
                     {
                         using (Tovar tovar = new Tovar())
-                        {
+                        {                            
                             tovar.Code = reader["code"].ToString();
                             tovar.Name = reader["name"].ToString();
-                            tovar.RetailPrice = reader["retail_price"].ToString().Replace(",", ".");
+                            tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
                             tovar.ItsDeleted = reader["its_deleted"].ToString();
                             tovar.Nds = reader["nds"].ToString();
                             tovar.ItsCertificate = reader["its_certificate"].ToString();
                             tovar.PercentBonus = reader["percent_bonus"].ToString().Replace(",", ".");
                             tovar.TnVed = reader["tnved"].ToString();
                             tovar.ItsMarked = reader["its_marked"].ToString();
+                            tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
                             loadPacketData.ListTovar.Add(tovar);
                         }
                     }
                     reader.Close();
 
+                    //query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode WHERE barcode.tovar_code in(" +
+                    //        " SELECT nabor.code FROM (SELECT tovar.code FROM tovar  " +
+                    //        " LEFT JOIN prices  ON  tovar.code = prices.tovar_code  AND shop = '" + nick_shop + "'   AND prices.characteristic IS NULL  WHERE tovar.datetime_update>'" + queryPacketData.LastDateDownloadTovar + "')AS nabor)";
                     query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode WHERE barcode.tovar_code in(" +
-                            " SELECT nabor.code FROM (SELECT tovar.code FROM tovar  " +
-                            " LEFT JOIN prices  ON  tovar.code = prices.tovar_code  AND shop = '" + nick_shop + "'   AND prices.characteristic IS NULL  WHERE tovar.datetime_update>'" + queryPacketData.LastDateDownloadTovar + "')AS nabor)";
+                           " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) AND barcode.datetime_update>'" + queryPacketData.LastDateDownloadTovar + "';";                    
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
 
                     command = new SqlCommand(query, conn);
                     reader = command.ExecuteReader();
@@ -2606,8 +2668,8 @@ namespace DiscountSystem
                     }
                     reader.Close();
 
-                    query = " SELECT date_start,date_end,action_active.num_doc,tip,barcode,persent,sum,comment, " +
-                            " present,mark,disc_only,time_start,time_end " +
+                    query = " SELECT date_start,date_end,action_active.num_doc,tip,barcode,persent,sum,comment " +
+                            " ,mark,disc_only,time_start,time_end " +
                             " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
                             " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
                             " ,sum_bonus,execution_order,kind " +
@@ -2626,7 +2688,7 @@ namespace DiscountSystem
                             actionHeader.NumDoc = reader["num_doc"].ToString();
                             actionHeader.Tip = reader["tip"].ToString();
                             actionHeader.Barcode = reader["barcode"].ToString();
-                            actionHeader.CodeTovar = reader["present"].ToString().Replace(",", ".");
+                            //actionHeader.CodeTovar = reader["present"].ToString().Replace(",", ".");
                             actionHeader.Persent = reader["persent"].ToString().Replace(",", ".");
                             actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
                             actionHeader.Comment = reader["comment"].ToString().Trim();
