@@ -1866,6 +1866,7 @@ namespace DiscountSystem
             public List<ActionClients> ListActionClients { get; set; }
             public bool PacketIsFull { get; set; }//true если пакет заполннен до конца
             public bool Exchange { get; set; }//true если идет обмен
+            public string Exception { get; set; }//true если идет обмен
 
             void IDisposable.Dispose()
             {
@@ -1997,6 +1998,7 @@ namespace DiscountSystem
         }
         public class QueryPacketData
         {
+            public string Version { get; set; }
             public string NickShop { get; set; }
             public string CodeShop { get; set; }
             public string NumCash { get; set; }
@@ -2052,10 +2054,17 @@ namespace DiscountSystem
             string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();           
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             QueryPacketData queryPacketData = JsonConvert.DeserializeObject<QueryPacketData>(decrypt_data);
+
             
+
             SqlConnection conn = new SqlConnection( scheme=="1" ? getConnectionString() : getConnectionString2());
             using (LoadPacketData loadPacketData = new LoadPacketData())
             {
+                if (Convert.ToDouble(queryPacketData.Version) < 10873126877)
+                {
+                    loadPacketData.Exception=" У вас устаревшая версия программы ";
+
+                }
                 loadPacketData.PacketIsFull = false;//Пакет полностью заполнен
                 loadPacketData.Exchange = false;//В базе идет обновление данных
 
@@ -2069,7 +2078,7 @@ namespace DiscountSystem
                         " IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash; " +
                         " SELECT prices_by_price_types.tovar_code AS tovar_code, prices_by_price_types.price AS prices_by_price_type INTO #t_t_nick_shop_num_cash from shops " +
                         " LEFT JOIN prices_by_price_types ON shops.UID_type_of_prices = prices_by_price_types.UID_type_of_prices " +
-                        " WHERE shops.code = @nick_shop;" +                        
+                        " WHERE shops.code = @nick_shop;" +
                         " SELECT tovar.code,prices.price AS personal_price INTO #t_t2_nick_shop_num_cash " +
                         " FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  AND prices.characteristic IS NULL  GROUP BY code,price " +
                         " HAVING ISNULL(price, 0) > 0;" +
@@ -2089,7 +2098,7 @@ namespace DiscountSystem
                         " CREATE CLUSTERED INDEX code_index ON #t_t3_nick_shop_num_cash (code ASC);";
 
                     query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
-                    query = query.Replace("@nick_shop", "'"+nick_shop+"'");
+                    query = query.Replace("@nick_shop", "'" + nick_shop + "'");
 
                     //INTO #t_t3_nick_shop_num_cash  
                     SqlCommand command = new SqlCommand(query, conn);
@@ -2103,14 +2112,14 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     SqlDataReader reader = command.ExecuteReader();
-                    
+
                     loadPacketData.ListTovar = new List<Tovar>();
                     while (reader.Read())
                     {
-                        
+
                         using (Tovar tovar = new Tovar())
                         {
-                            tovar.Code = reader["code"].ToString();                            
+                            tovar.Code = reader["code"].ToString();
                             tovar.Name = reader["name"].ToString();
                             tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
                             tovar.ItsDeleted = reader["its_deleted"].ToString();
@@ -2127,7 +2136,7 @@ namespace DiscountSystem
 
                     query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode WHERE barcode.tovar_code in(" +
                             " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
-                            //" IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
+                    //" IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
                     query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
 
                     //query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode"; 
@@ -2135,7 +2144,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
-                    
+
                     loadPacketData.ListBarcode = new List<Barcode>();
                     while (reader.Read())
                     {
@@ -2159,7 +2168,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
-                    
+
                     loadPacketData.ListActionHeader = new List<ActionHeader>();
                     while (reader.Read())
                     {
@@ -2202,16 +2211,16 @@ namespace DiscountSystem
                     query = " SELECT action_active.num_doc,action_table.num_list,action_table.tovar,action_table.price " +
                         " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
                         " LEFT JOIN action_table ON action_active.num_doc = action_table.num_doc  WHERE action_table.tovar IN " +
-                        "(SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash);"+
+                        "(SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash);" +
                         "IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
-                    
+
                     query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
 
                     command = new SqlCommand(query, conn);
                     //command.CommandTimeout = 300;
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
-                    
+
                     loadPacketData.ListActionTable = new List<ActionTable>();
                     while (reader.Read())
                     {
@@ -2220,7 +2229,7 @@ namespace DiscountSystem
                             actionTable.NumDoc = reader["num_doc"].ToString();
                             actionTable.NumList = reader["num_list"].ToString();
                             actionTable.CodeTovar = reader["tovar"].ToString();
-                            actionTable.Price = reader["price"].ToString().Replace(",",".");
+                            actionTable.Price = reader["price"].ToString().Replace(",", ".");
                             loadPacketData.ListActionTable.Add(actionTable);
                         }
                     }
@@ -2232,7 +2241,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
-                    
+
                     loadPacketData.ListCharacteristic = new List<Characteristic>();
                     while (reader.Read())
                     {
@@ -2251,7 +2260,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
-                    
+
                     loadPacketData.ListSertificate = new List<Sertificate>();
                     while (reader.Read())
                     {
@@ -2275,13 +2284,13 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
-                    
+
                     int numstr = 1;
                     while (reader.Read())
                     {
                         using (PromoText promoText = new PromoText())
                         {
-                            promoText.AdvertisementText = reader["text"].ToString();                            
+                            promoText.AdvertisementText = reader["text"].ToString();
                             promoText.NumStr = numstr.ToString();
                             numstr++;
                             loadPacketData.ListPromoText.Add(promoText);
@@ -2294,7 +2303,7 @@ namespace DiscountSystem
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
-                    
+
                     loadPacketData.ListActionClients = new List<ActionClients>();
                     while (reader.Read())
                     {
@@ -2309,12 +2318,15 @@ namespace DiscountSystem
 
                     query = "SELECT limit FROM constants";
                     command = new SqlCommand(query, conn);
-                    
+
                     loadPacketData.Threshold = Convert.ToInt32(command.ExecuteScalar());
 
                     conn.Close();
-                    
-                    loadPacketData.PacketIsFull = true;
+
+                    if (loadPacketData.Exception ==null)
+                    {
+                        loadPacketData.PacketIsFull = true;
+                    }
                     if (check_avalible_dataV8(scheme))
                     {
                         loadPacketData.Exchange = true;
@@ -2865,20 +2877,20 @@ namespace DiscountSystem
             StringBuilder query_insert_data_on_sales = new StringBuilder();
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             SalesPortions salesPortions = JsonConvert.DeserializeObject <SalesPortions>(decrypt_data);
+            if (Convert.ToDouble(salesPortions.Version) < 10873126877)
+            {
+                return result;
+            }                
+
             if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop.Trim()))
             {
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
-                {
-                    s = "DELETE FROM sales_table WHERE shop='" + nick_shop + "' AND num_doc = " + sph.Num_doc +
-                       " AND num_cash=" + sph.Num_cash + " AND date_time_write='" + sph.Date_time_start + "';";
+                {                 
+                    s = "DELETE FROM sales_header WHERE guid='" + sph.Guid + "';";
                     query_insert_data_on_sales.Append(s);
-                }
-                foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
-                {
-                    s = "DELETE FROM sales_header WHERE shop='" + nick_shop + "' AND num_doc = " + spt.Num_doc +
-                        " AND num_cash=" + spt.Num_cash + " AND date_time_start='" + spt.Date_time_write + "';";
+                    s = "DELETE FROM sales_table WHERE guid='" + sph.Guid + "';";
                     query_insert_data_on_sales.Append(s);
-                }
+                }              
 
                 StringBuilder sb = new StringBuilder();
                 //Соберем запрос из шапок документов
