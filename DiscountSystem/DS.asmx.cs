@@ -1913,6 +1913,7 @@ namespace DiscountSystem
             public string Barcode { get; set; }
             public string Persent { get; set; }
             public string sum { get; set; }
+            public string sum1 { get; set; }
             public string Comment { get; set; }
             //public string CodeTovar { get; set; }
             public string Marker { get; set; }
@@ -2161,7 +2162,7 @@ namespace DiscountSystem
                             " mark,disc_only,time_start,time_end " +//" present,mark,disc_only,time_start,time_end " +
                             " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
                             " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
-                            " ,sum_bonus,execution_order,gift_price,kind " +
+                            " ,sum_bonus,execution_order,gift_price,kind,sum_2 " +
                             " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
                             " LEFT JOIN action_header ON action_active.num_doc = action_header.num_doc ";
 
@@ -2183,6 +2184,8 @@ namespace DiscountSystem
                             //actionHeader.CodeTovar = "0";// reader["present"].ToString().Replace(",", ".");
                             actionHeader.Persent = reader["persent"].ToString().Replace(",", ".");
                             actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
+                            actionHeader.sum1 = reader["sum_2"].ToString().Replace(",", ".");123456
+
                             actionHeader.Comment = reader["comment"].ToString().Trim();
                             actionHeader.Marker = reader["mark"].ToString().Trim();
                             actionHeader.ActionByDiscount = reader["disc_only"].ToString().Trim();
