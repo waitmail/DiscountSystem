@@ -1683,6 +1683,8 @@ namespace DiscountSystem
             public string tovar { get; set; }
             public string quantity { get; set; }
             public string type_of_operation { get; set; }
+            public string guid { get; set; }
+
         }
 
         public class DeletedItems : IDisposable
@@ -1690,6 +1692,7 @@ namespace DiscountSystem
             public string Version { get; set; }
             public string NickShop { get; set; }
             public string CodeShop { get; set; }
+            public string Guid { get; set; }
             public List<DeletedItem> ListDeletedItem { get; set; }
 
             void IDisposable.Dispose()
@@ -1728,7 +1731,8 @@ namespace DiscountSystem
                     "' AND date_time_action='" + deletedItem.date_time_action +
                     "' AND tovar=" + deletedItem.tovar +
                     "  AND quantity=" + deletedItem.quantity +
-                    "  AND type_of_operation=" + deletedItem.type_of_operation+";");
+                    "  AND type_of_operation=" + deletedItem.type_of_operation +
+                    "  AND guid ='" + deletedItem.guid + "';");
 
                 sb.Append("INSERT INTO deleted_items" +
                     "    (shop" +
@@ -1738,7 +1742,9 @@ namespace DiscountSystem
                     "    ,date_time_action" +
                     "    ,tovar" +
                     "    ,quantity" +
-                    "    ,type_of_operation)" +
+                    "    ,type_of_operation" +
+                    "    ,guid)" +
+
                     "    VALUES ('" +
                          nick_shop + "'," +
                          deletedItem.num_doc + "," +
@@ -1747,7 +1753,8 @@ namespace DiscountSystem
                           deletedItem.date_time_action + "'," +
                           deletedItem.tovar + "," +
                           deletedItem.quantity + "," +
-                          deletedItem.type_of_operation + ");");
+                          deletedItem.type_of_operation +",'"+
+                          deletedItem.guid+"');");
             }
 
             SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
@@ -2184,8 +2191,7 @@ namespace DiscountSystem
                             //actionHeader.CodeTovar = "0";// reader["present"].ToString().Replace(",", ".");
                             actionHeader.Persent = reader["persent"].ToString().Replace(",", ".");
                             actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
-                            actionHeader.sum1 = reader["sum_2"].ToString().Replace(",", ".");123456
-
+                            actionHeader.sum1 = reader["sum_2"].ToString().Replace(",", ".");
                             actionHeader.Comment = reader["comment"].ToString().Trim();
                             actionHeader.Marker = reader["mark"].ToString().Trim();
                             actionHeader.ActionByDiscount = reader["disc_only"].ToString().Trim();
