@@ -43,7 +43,7 @@ namespace DiscountSystem
         public string[] GetTypesCard()
         {
             SqlConnection conn = null; string[] result = new string[1]; result[0] = "-1";
-            conn = new SqlConnection(getConnectionString());            
+            conn = new SqlConnection(getConnectionString1());            
             try
             {
                 StringBuilder result_query = new StringBuilder();
@@ -182,7 +182,7 @@ namespace DiscountSystem
 
             //SqlConnection conn = null;
             //conn = new SqlConnection(getConnectionString());
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
 
             string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
@@ -608,7 +608,7 @@ namespace DiscountSystem
 
             string[] list_sertificate = decrypt_data.ToString().Split('|');
 
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             SqlTransaction trans = null;
             SqlCommand command = null;
             string query = "";
@@ -749,7 +749,7 @@ namespace DiscountSystem
             DateTime datetime = new DateTime(Convert.ToInt64(d[1]));
 
             //conn = new SqlConnection(getConnectionString2());
-            conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             try
             {
                 StringBuilder result_query = new StringBuilder();
@@ -984,7 +984,7 @@ namespace DiscountSystem
             string count_day = CryptorEngine.get_count_day();
             string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();                
             string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             try
             {
                 string query = "SELECT is_active FROM certificate WHERE code="+decrypt_data;
@@ -1010,8 +1010,32 @@ namespace DiscountSystem
 
             return result;
         }
-      
-        private string getConnectionString()
+
+        private string getConnectionString(int number)
+        {
+            string result = "";
+
+            switch (number)
+            {
+                case 1:
+                    result = getConnectionString1();
+                    break;
+                case 3:
+                    result = getConnectionString2();
+                    break;
+                case 4:
+                    result = getConnectionString3();
+                    break;
+                default:
+                    result = "Неизвестное число";
+                    break;
+            }
+
+            return result;
+        }
+
+
+        private string getConnectionString1()
         {
             string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;"; //РАБОЧАЯ
             //string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;";
@@ -1023,6 +1047,17 @@ namespace DiscountSystem
         private string getConnectionString2()
         {
             string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_eva;"; //РАБОЧАЯ
+            //string result = "Server=AP-35\\SQLEXPRESS;User Id=ch_disc_sql_tranzit;Password=511660;Database=ch_disc_tranzit;";
+            //string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_eva;";
+            //string result = "Server=10.21.6.2;User Id=ch_disc_sql_tranzit;Password=Sql0412755;Database=cash;";
+            //string result = "Server=10.21.6.2;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_8;";
+
+            return result;
+        }
+
+        private string getConnectionString3()
+        {
+            string result = "Server=192.168.2.59;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_exchange;"; //РАБОЧАЯ
             //string result = "Server=AP-35\\SQLEXPRESS;User Id=ch_disc_sql_tranzit;Password=511660;Database=ch_disc_tranzit;";
             //string result = "Server=127.0.0.1;User Id=cash-place;Password=ljcneg5116602014xbcnsqljv;Database=cash_eva;";
             //string result = "Server=10.21.6.2;User Id=ch_disc_sql_tranzit;Password=Sql0412755;Database=cash;";
@@ -1428,7 +1463,7 @@ namespace DiscountSystem
         {
             bool result = false;
 
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
 
             SqlTransaction tran = null;
 
@@ -1467,7 +1502,7 @@ namespace DiscountSystem
 
         private bool check_avalible_dataV8(string scheme)
         {
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             bool result = false;
 
             try
@@ -1556,7 +1591,7 @@ namespace DiscountSystem
                     changeStatusClient.new_phone_number+"')");// processed)
             }
 
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             SqlTransaction tran = null;
             try
             {
@@ -1635,7 +1670,7 @@ namespace DiscountSystem
                 sb.Append("INSERT INTO phone_number_log(shop,client_code,phone_number,date_time)VALUES('" + phonesClients.NickShop + "','" + phonesClient.ClientCode + "','"+phonesClient.NumPhone+"','"+ DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")+"');");
             }
 
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             SqlTransaction tran = null;
             try
             {
@@ -1723,16 +1758,18 @@ namespace DiscountSystem
             StringBuilder sb = new StringBuilder();
             foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
             {
-                sb.Append("DELETE FROM deleted_items WHERE " +
-                    "shop='" + nick_shop +
-                    "' AND num_doc=" + deletedItem.num_doc +
-                    "  AND num_cash=" + deletedItem.num_cash +
-                    "  AND date_time_start='" + deletedItem.date_time_start +
-                    "' AND date_time_action='" + deletedItem.date_time_action +
-                    "' AND tovar=" + deletedItem.tovar +
-                    "  AND quantity=" + deletedItem.quantity +
-                    "  AND type_of_operation=" + deletedItem.type_of_operation +
-                    "  AND guid ='" + deletedItem.guid + "';");
+                //sb.Append("DELETE FROM deleted_items WHERE " +
+                //    "shop='" + nick_shop +
+                //    "' AND num_doc=" + deletedItem.num_doc +
+                //    "  AND num_cash=" + deletedItem.num_cash +
+                //    "  AND date_time_start='" + deletedItem.date_time_start +
+                //    "' AND date_time_action='" + deletedItem.date_time_action +
+                //    "' AND tovar=" + deletedItem.tovar +
+                //    "  AND quantity=" + deletedItem.quantity +
+                //    "  AND type_of_operation=" + deletedItem.type_of_operation +
+                //    "  AND guid ='" + deletedItem.guid + "';");
+
+                sb.Append("DELETE FROM deleted_items WHERE guid ='" + deletedItem.guid + "';");
 
                 sb.Append("INSERT INTO deleted_items" +
                     "    (shop" +
@@ -1757,7 +1794,7 @@ namespace DiscountSystem
                           deletedItem.guid+"');");
             }
 
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             SqlTransaction tran = null;
             try
             {
@@ -1793,67 +1830,67 @@ namespace DiscountSystem
         }
             
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="nick_shop"></param>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        [WebMethod]
-        public string UploadCodeClients(string nick_shop, string data, string scheme)
-        {
-            string result = "-1";
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="nick_shop"></param>
+        ///// <param name="data"></param>
+        ///// <returns></returns>
+        //[WebMethod]
+        //public string UploadCodeClients(string nick_shop, string data, string scheme)
+        //{
+        //    string result = "-1";
 
-            string code_shop = get_id_database(nick_shop, scheme);
-            if (code_shop.Trim().Length == 0)
-            {
-                return result;
-            }
+        //    string code_shop = get_id_database(nick_shop, scheme);
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        return result;
+        //    }
 
-            string count_day = CryptorEngine.get_count_day();
-            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
-            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
-            string[] delimiters = new string[] { "|" };
-            string[] delimiters2 = new string[] { "," };
-            string[] d = decrypt_data.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+        //    string[] delimiters = new string[] { "|" };
+        //    string[] delimiters2 = new string[] { "," };
+        //    string[] d = decrypt_data.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
-            StringBuilder sb = new StringBuilder();
-            foreach (string str in d)
-            {
-                string[] d2 = str.Split(delimiters2, StringSplitOptions.RemoveEmptyEntries);
-                sb.Append("DELETE FROM new_client_code_in WHERE old_client_code=" + d2[0] + ";");
-                sb.Append("INSERT INTO new_client_code_in(old_client_code,new_client_code,shop,date_record) VALUES(" + str + ");");
-            }
+        //    StringBuilder sb = new StringBuilder();
+        //    foreach (string str in d)
+        //    {
+        //        string[] d2 = str.Split(delimiters2, StringSplitOptions.RemoveEmptyEntries);
+        //        sb.Append("DELETE FROM new_client_code_in WHERE old_client_code=" + d2[0] + ";");
+        //        sb.Append("INSERT INTO new_client_code_in(old_client_code,new_client_code,shop,date_record) VALUES(" + str + ");");
+        //    }
 
-            SqlConnection conn = new SqlConnection(getConnectionString());
-            SqlTransaction tran = null;
-            try
-            {
-                conn.Open();
-                tran = conn.BeginTransaction();
-                string query = sb.ToString();
-                SqlCommand command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                command.ExecuteNonQuery();
-                tran.Commit();
-                command.Dispose();
-                conn.Close();
-                result = "1";
-            }
-            catch
-            {
+        //    SqlConnection conn = new SqlConnection(getConnectionString1());
+        //    SqlTransaction tran = null;
+        //    try
+        //    {
+        //        conn.Open();
+        //        tran = conn.BeginTransaction();
+        //        string query = sb.ToString();
+        //        SqlCommand command = new SqlCommand(query, conn);
+        //        command.Transaction = tran;
+        //        command.ExecuteNonQuery();
+        //        tran.Commit();
+        //        command.Dispose();
+        //        conn.Close();
+        //        result = "1";
+        //    }
+        //    catch
+        //    {
 
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    conn.Close();
-                }
-            }
+        //    }
+        //    finally
+        //    {
+        //        if (conn.State == ConnectionState.Open)
+        //        {
+        //            conn.Close();
+        //        }
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         #region GetDataForCasheV8Jason
 
@@ -1874,7 +1911,7 @@ namespace DiscountSystem
             public bool PacketIsFull { get; set; }//true если пакет заполннен до конца
             public bool Exchange { get; set; }//true если идет обмен
             public string Exception { get; set; }//true если идет обмен
-
+            public string TokenMark { get; set; }
             void IDisposable.Dispose()
             {
                 
@@ -2004,13 +2041,16 @@ namespace DiscountSystem
                 
             }
         }
+        /// <summary>
+        /// Данные из кассы
+        /// </summary>
         public class QueryPacketData
         {
             public string Version { get; set; }
             public string NickShop { get; set; }
             public string CodeShop { get; set; }
             public string NumCash { get; set; }
-            public string LastDateDownloadTovar { get; set; }
+            public string LastDateDownloadTovar { get; set; }            
         }
         private Byte[] CompressString(string value)
         {
@@ -2062,10 +2102,8 @@ namespace DiscountSystem
             string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();           
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             QueryPacketData queryPacketData = JsonConvert.DeserializeObject<QueryPacketData>(decrypt_data);
-
-            
-
-            SqlConnection conn = new SqlConnection( scheme=="1" ? getConnectionString() : getConnectionString2());
+                       
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             using (LoadPacketData loadPacketData = new LoadPacketData())
             {
                 if (Convert.ToDouble(queryPacketData.Version) < 10873126877)
@@ -2330,6 +2368,11 @@ namespace DiscountSystem
 
                     loadPacketData.Threshold = Convert.ToInt32(command.ExecuteScalar());
 
+                    query = "SELECT COALESCE(crpt_api_key, '') AS crpt_api_key FROM shops  where code ='" + nick_shop + "'";
+                    command = new SqlCommand(query, conn);
+
+                    loadPacketData.TokenMark = command.ExecuteScalar().ToString();                    
+
                     conn.Close();
 
                     if (loadPacketData.Exception ==null)
@@ -2388,7 +2431,7 @@ namespace DiscountSystem
         
         private void insert_errors_GetDataForCasheV8Jason(string shop,string num_cash,string info,string scheme)
         {
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             try
             {
                 conn.Open();
@@ -2449,7 +2492,7 @@ namespace DiscountSystem
             {
                 return result = "-1";
             }
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             try
             {
                 conn.Open();
@@ -2524,8 +2567,8 @@ namespace DiscountSystem
             {
                 return result = "-1";
             }
-            
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             try
             {
                 conn.Open();
@@ -2608,7 +2651,7 @@ namespace DiscountSystem
             QueryPacketData queryPacketData = JsonConvert.DeserializeObject<QueryPacketData>(decrypt_data);
             //queryPacketData.LastDateDownloadTovar
 
-            SqlConnection conn = new SqlConnection(getConnectionString());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             using (LoadPacketData loadPacketData = new LoadPacketData())
             {
                 loadPacketData.PacketIsFull = false;//Пакет полностью заполнен
@@ -2894,11 +2937,11 @@ namespace DiscountSystem
             if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop.Trim()))
             {
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
-                {                 
-                    s = "DELETE FROM sales_header WHERE guid='" + sph.Guid + "';";
-                    query_insert_data_on_sales.Append(s);
+                {
                     s = "DELETE FROM sales_table WHERE guid='" + sph.Guid + "';";
                     query_insert_data_on_sales.Append(s);
+                    s = "DELETE FROM sales_header WHERE guid='" + sph.Guid + "';";
+                    query_insert_data_on_sales.Append(s);                    
                 }              
 
                 StringBuilder sb = new StringBuilder();
@@ -2938,7 +2981,8 @@ namespace DiscountSystem
                                                 "sum_cash1,"+
                                                 "sum_terminal1," +
                                                 "sum_certificate1," +
-                                                "guid)" +
+                                                "guid,"+
+                                                "sbp)" +
                                                 " VALUES('" + sph.Shop + "'," +
                                                 sph.Num_doc + "," +
                                                 sph.Num_cash + ",'" +
@@ -2972,7 +3016,8 @@ namespace DiscountSystem
                                                 sph.Sum_cash1+","+
                                                 sph.Sum_terminal1+","+
                                                 sph.Sum_certificate1+",'"+
-                                                sph.Guid+"')";
+                                                sph.Guid+"',"+
+                                                sph.SBP+")";
                     query_insert_data_on_sales.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
@@ -3072,6 +3117,7 @@ namespace DiscountSystem
             public string VizaD { get; set; }
             public string SystemTaxation { get; set; }
             public string Guid { get; set; }
+            public string SBP { get; set; }
 
 
         }
@@ -3108,8 +3154,8 @@ namespace DiscountSystem
         private string get_id_database(string num_shop, string scheme)
         {
             string result = "";
-                                   
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             try
             {
                 conn.Open();
@@ -3168,7 +3214,7 @@ namespace DiscountSystem
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             LoginPassPromo passPromo = JsonConvert.DeserializeObject<LoginPassPromo>(decrypt_data);
 
-            SqlConnection conn = new SqlConnection(scheme == "1" ? getConnectionString() : getConnectionString2());
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             try
             {
                 conn.Open();
