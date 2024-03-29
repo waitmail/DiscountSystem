@@ -755,21 +755,31 @@ namespace DiscountSystem
                 StringBuilder result_query = new StringBuilder();
                 conn.Open();
                 //string query = "SELECT code,name,sum,birthday,type_card,its_work  FROM clients WHERE datetime_update > '" + datetime.AddDays(-1).ToString("dd-MM-yyyy HH:mm:ss") + "'";
-                string query = " SELECT TOP 10000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on,reason_for_blocking,notify_security  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
-                SqlCommand command = new SqlCommand(query, conn);
-                SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
+                string query = "";
+                if (scheme != "4")
                 {
-                    result_query.Append("|'" + reader[0].ToString() + "','" + reader[1].ToString().Replace(",", "") + "'," +
-                         reader[2].ToString().Replace(",", ".") + ",'" + reader.GetDateTime(3).ToString("yyyy-MM-dd") + "'," +
-                         reader[4].ToString() + "," + reader[5].ToString() + ",'" + reader.GetDateTime(6).ToString("yyyy-MM-dd HH:mm:ss") + "','" +
-                         (reader[7].ToString().Trim() == "" ? "0" : reader[7].ToString()) + "','" +
-                         reader[8].ToString().Trim() + "','" + reader["bonus_is_on"].ToString().Trim() + "','" + 
-                         reader["reason_for_blocking"].ToString().Trim()+ "','" +
-                         (reader["notify_security"].ToString().Trim()=="False" ? "0" : "1")+"'");
+                    query = " SELECT TOP 10000 code,name,sum,birthday,type_card,its_work,datetime_update,phone,attribute,bonus_is_on,reason_for_blocking,notify_security  FROM clients WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update ";
+                    SqlCommand command = new SqlCommand(query, conn);
+                    SqlDataReader reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        result_query.Append("|'" + reader[0].ToString() + "','" + reader[1].ToString().Replace(",", "") + "'," +
+                             reader[2].ToString().Replace(",", ".") + ",'" + reader.GetDateTime(3).ToString("yyyy-MM-dd") + "'," +
+                             reader[4].ToString() + "," + reader[5].ToString() + ",'" + reader.GetDateTime(6).ToString("yyyy-MM-dd HH:mm:ss") + "','" +
+                             (reader[7].ToString().Trim() == "" ? "0" : reader[7].ToString()) + "','" +
+                             reader[8].ToString().Trim() + "','" + reader["bonus_is_on"].ToString().Trim() + "','" +
+                             reader["reason_for_blocking"].ToString().Trim() + "','" +
+                             (reader["notify_security"].ToString().Trim() == "False" ? "0" : "1") + "'");
+                    }
+                    reader.Close();
+                    conn.Close();
                 }
-                reader.Close();
-                conn.Close();
+                else
+                {
+                    query = " SELECT TOP 10000 card_id,name,holiday,use_blocked ,datetime_update,reason_for_blocking,notify_security FROM "+
+                            " (Select network_ID FROM shops  WHERE  code = 'A01')AS TOO LEFT JOIN cards_information ON "+
+                            " TOO.network_ID = cards_information.network_ID WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss")+"'";
+                }
 
                 result = CryptorEngine.Encrypt(result_query.ToString(), true, key);
             }
@@ -2179,9 +2189,16 @@ namespace DiscountSystem
                         }
                     }
                     reader.Close();
-
-                    query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode WHERE barcode.tovar_code in(" +
-                            " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
+                    if (scheme != "4")
+                    {
+                        query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode WHERE barcode.tovar_code in(" +
+                                " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
+                    }
+                    else
+                    {
+                        query = " SELECT barcode.tovar_code, barcode.barcode  FROM tovar_barcode WHERE barcode.tovar_code in(" +
+                                " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
+                    }
                     //" IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
                     query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
 
