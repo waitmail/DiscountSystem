@@ -772,32 +772,35 @@ namespace DiscountSystem
                              (reader["notify_security"].ToString().Trim() == "False" ? "0" : "1") + "'");
                     }
                     reader.Close();
-                    conn.Close();
+                    conn.Close();                    
+                    result = result_query.ToString();
                 }
                 else
                 {
-                    query = " SELECT TOP 10000 card_id,name,holiday,use_blocked ,datetime_update,reason_for_blocking,notify_security FROM " +
-                            " (Select network_ID FROM shops  WHERE  code = 'A01')AS TOO LEFT JOIN cards_information ON " +
-                            " TOO.network_ID = cards_information.network_ID WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "'";
+                    query = " SELECT TOP 50000 card_id,name,holiday,use_blocked ,datetime_update,reason_for_blocking,notify_security FROM " +
+                            " (Select network_ID FROM shops  WHERE  code = 'A01')AS TOO LEFT JOIN cards ON " +
+                            " TOO.network_ID = cards.network_ID WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "'";
                     SqlCommand command = new SqlCommand(query, conn);
                     SqlDataReader reader = command.ExecuteReader();
                     Clients clients = new Clients();
                     List<Client> list_clients = new List<Client>();
+                    clients.list_clients = list_clients;
                     while (reader.Read())
                     {
                         Client client = new Client();
-                        client.card_id = reader["card_id"].ToString();
+                        client.code   = reader["card_number"].ToString();
+                        client.phone = reader["card_id"].ToString();
                         client.name = reader["name"].ToString();
                         client.holiday = reader["holiday"].ToString();
-                        client.use_blocked = reader["use_blocked"].ToString();
+                        client.use_blocked = Convert.ToBoolean(reader["use_blocked"]) ? "0" : "1";
                         client.datetime_update = reader["datetime_update"].ToString();
                         client.reason_for_blocking = reader["reason_for_blocking"].ToString();
-                        client.notify_security = reader["notify_security"].ToString();
+                        client.notify_security = Convert.ToBoolean(reader["notify_security"]) ? "1" : "0"; 
+                        list_clients.Add(client);
                     }
-                    result = JsonConvert.SerializeObject(list_clients, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                    result = JsonConvert.SerializeObject(clients, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });                    
                 }
-                
-                result = CryptorEngine.Encrypt(result_query.ToString(), true, key);
+                result = CryptorEngine.Encrypt(result, true, key);
             }
             catch (Exception ex)
             {
@@ -816,7 +819,8 @@ namespace DiscountSystem
                
         public class Client
         {
-            public string card_id { get; set; }
+            public string code { get; set; }
+            public string phone { get; set; }
             public string name { get; set; }
             public string holiday { get; set; }
             public string use_blocked { get; set; }
