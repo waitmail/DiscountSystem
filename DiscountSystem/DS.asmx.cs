@@ -777,8 +777,8 @@ namespace DiscountSystem
                 }
                 else
                 {
-                    query = " SELECT TOP 50000 card_id,name,holiday,use_blocked ,datetime_update,reason_for_blocking,notify_security FROM " +
-                            " (Select network_ID FROM shops  WHERE  code = 'A01')AS TOO LEFT JOIN cards ON " +
+                    query = " SELECT TOP 50000 card_id,name,holiday,use_blocked ,datetime_update,reason_for_blocking,notify_security,card_number FROM " +
+                            " (Select network_ID FROM shops  WHERE  code = '"+ nick_shop+"')AS TOO LEFT JOIN cards ON " +
                             " TOO.network_ID = cards.network_ID WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "'";
                     SqlCommand command = new SqlCommand(query, conn);
                     SqlDataReader reader = command.ExecuteReader();
