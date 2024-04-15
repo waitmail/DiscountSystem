@@ -1706,13 +1706,27 @@ namespace DiscountSystem
             PhonesClients phonesClients = JsonConvert.DeserializeObject<PhonesClients>(decrypt_data);
 
             StringBuilder sb = new StringBuilder();
-            foreach (PhoneClient phonesClient in phonesClients.ListPhoneClient)
+            if (scheme != "4")
             {
-                sb.Append("DELETE FROM phone_number_in WHERE client_code='" + phonesClient.ClientCode + "';");
-                sb.Append("INSERT INTO phone_number_in(client_code,phone_number)VALUES('" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "');");
-                //sb.Append("DELETE FROM phone_number_log WHERE client_code='" + phonesClient.ClientCode + "';");
-                sb.Append("INSERT INTO phone_number_log(shop,client_code,phone_number,date_time)VALUES('" + phonesClients.NickShop + "','" + phonesClient.ClientCode + "','"+phonesClient.NumPhone+"','"+ DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")+"');");
+                foreach (PhoneClient phonesClient in phonesClients.ListPhoneClient)
+                {
+                    sb.Append("DELETE FROM phone_number_in WHERE client_code='" + phonesClient.ClientCode + "';");
+                    sb.Append("INSERT INTO phone_number_in(client_code,phone_number)VALUES('" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "');");
+                    //sb.Append("DELETE FROM phone_number_log WHERE client_code='" + phonesClient.ClientCode + "';");
+                    sb.Append("INSERT INTO phone_number_log(shop,client_code,phone_number,date_time)VALUES('" + phonesClients.NickShop + "','" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "','" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "');");
+                }
             }
+            else
+            {
+                foreach (PhoneClient phonesClient in phonesClients.ListPhoneClient)
+                {
+                    sb.Append("DELETE FROM cards_phone_number_in WHERE client_code='" + phonesClient.ClientCode + "';");
+                    sb.Append("INSERT INTO cards_phone_number_in(client_code,phone_number)VALUES('" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "');");
+                    //sb.Append("DELETE FROM phone_number_log WHERE client_code='" + phonesClient.ClientCode + "';");
+                    sb.Append("INSERT INTO cards_phone_number_log(shop,client_code,phone_number,date_time)VALUES('" + phonesClients.NickShop + "','" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "','" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "');");
+                }
+            }
+
 
             SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             SqlTransaction tran = null;
@@ -3050,9 +3064,9 @@ namespace DiscountSystem
                                                 sph.Action + "," +
                                                 sph.Sum_cash + "," +
                                                 sph.Sum_terminal + "," +
-                                                sph.Sum_certificate + "," +
+                                                sph.Sum_certificate + ",'" +
                                                 //sph.Sales_assistant + "'," +
-                                                sph.Autor + ",'" +
+                                                sph.Autor + "','" +
                                                 sph.Comment + "',"+
                                                 salesPortions.Version+","+
                                                 sph.Its_print+",'"+
