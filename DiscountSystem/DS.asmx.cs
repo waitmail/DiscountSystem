@@ -802,7 +802,7 @@ namespace DiscountSystem
                 {
                     query = " SELECT TOP 50000 card_id,name,holiday,use_blocked ,datetime_update,reason_for_blocking,notify_security,card_number FROM " +
                             " (Select network_ID FROM shops  WHERE  code = '"+ nick_shop+"')AS TOO LEFT JOIN cards ON " +
-                            " TOO.network_ID = cards.network_ID WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "'";
+                            " TOO.network_ID = cards.network_ID WHERE datetime_update >= '" + datetime.ToString("dd-MM-yyyy HH:mm:ss") + "' order by datetime_update";
                     SqlCommand command = new SqlCommand(query, conn);
                     SqlDataReader reader = command.ExecuteReader();
                     Clients clients = new Clients();
@@ -2187,10 +2187,9 @@ namespace DiscountSystem
             SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             using (LoadPacketData loadPacketData = new LoadPacketData())
             {
-                if (Convert.ToDouble(queryPacketData.Version) < 10873126877)
+                if (Convert.ToDouble(queryPacketData.Version) < 10887422571)
                 {
-                    loadPacketData.Exception=" У вас устаревшая версия программы ";
-
+                    loadPacketData.Exception=" У вас устаревшая версия программы. Перезапустите программу для её обновления. ";
                 }
                 loadPacketData.PacketIsFull = false;//Пакет полностью заполнен
                 loadPacketData.Exchange = false;//В базе идет обновление данных
