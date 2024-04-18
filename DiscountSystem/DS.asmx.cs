@@ -167,6 +167,21 @@ namespace DiscountSystem
         //    return result;
         //}
 
+        public class Users
+        {
+            public List<User> list_users { get; set; }
+        }
+
+        public class User
+        {
+            public string shop { get; set; }
+            public string user_id { get; set; }
+            public string name { get; set; }
+            public string rights { get; set; }
+            public string password_m { get; set; }
+            public string password_b { get; set; }
+        }
+
 
         /// <summary>
         /// 
@@ -209,26 +224,32 @@ namespace DiscountSystem
             {
                 return result;
             }
+            Users users = new Users();
+            List<User> list_users = new List<User>();
+            users.list_users = list_users;
             try
             {
                 conn.Open();
                 //string query = " SELECT code,name,rights,shop,password_m,password_b  FROM users WHERE shop='" + nick_shop +"' OR shop=''";
-                string query = " SELECT users.code,users.name,users.rights,users_shops.shop,users.password_m,users.password_b,users.INN FROM users LEFT JOIN users_shops ON " +
-                    "   users.code=users_shops.code WHERE users_shops.shop='" + nick_shop + "'  OR users_shops.shop=''";
+                //string query = " SELECT users.code,users.name,users.rights,users_shops.shop,users.password_m,users.password_b,users.INN FROM users LEFT JOIN users_shops ON " +
+                //    "   users.code=users_shops.code WHERE users_shops.shop='" + nick_shop + "'  OR users_shops.shop=''";
+                string query = " SELECT users.user_id,users.name,users.rights,users_shops.shop,users.password_m,users.password_b FROM users  " +
+                               " LEFT JOIN users_shops ON users.user_id = users_shops.user_id WHERE users_shops.shop = '" + nick_shop + "'  OR users_shops.shop = ''";
 
                 SqlCommand command = new SqlCommand(query, conn);
-                SqlDataReader reader = command.ExecuteReader();
+                SqlDataReader reader = command.ExecuteReader();                
+                
                 while (reader.Read())
                 {
-                    result += reader["code"].ToString() + "|" + 
-                        reader["name"].ToString() + "|" + 
-                        reader["rights"].ToString() + "|" + 
-                        reader["shop"].ToString() + "|" + 
-                        reader["password_m"].ToString()+ "|"+
-                        reader["password_b"].ToString() + "|" +
-                        (reader["INN"].ToString().Trim()=="" ? " " : reader["INN"].ToString().Trim())+ "||";
-                        //reader["INN"].ToString().Trim()+ "||";
-                }              
+                    User user = new User();
+                    user.user_id    = reader["user_id"].ToString();
+                    user.shop       = reader["shop"].ToString();
+                    user.name       = reader["name"].ToString();
+                    user.rights     = reader["rights"].ToString();
+                    user.password_m = reader["password_m"].ToString();
+                    user.password_b = reader["password_b"].ToString();
+                    users.list_users.Add(user);                
+                }                              
             }
             catch
             {
@@ -242,12 +263,14 @@ namespace DiscountSystem
                 }
             }
 
-            if (result != "")
+            if (list_users.Count>0)
             {
-                result = result.Substring(0, result.Length - 2);                
+                //result = result.Substring(0, result.Length - 2);                
+                //result = CryptorEngine.Encrypt(result, true, key);
+                result = JsonConvert.SerializeObject(users, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
                 result = CryptorEngine.Encrypt(result, true, key);
             }
-            
+
             return result;
         }
 
@@ -795,8 +818,8 @@ namespace DiscountSystem
                         client.use_blocked = Convert.ToBoolean(reader["use_blocked"]) ? "0" : "1";
                         client.datetime_update = reader["datetime_update"].ToString();
                         client.reason_for_blocking = reader["reason_for_blocking"].ToString();
-                        client.notify_security = Convert.ToBoolean(reader["notify_security"]) ? "1" : "0"; 
-                        list_clients.Add(client);
+                        client.notify_security = Convert.ToBoolean(reader["notify_security"]) ? "1" : "0";                        
+                        clients.list_clients.Add(client);
                     }
                     result = JsonConvert.SerializeObject(clients, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });                    
                 }
