@@ -2011,6 +2011,7 @@ namespace DiscountSystem
             public string TnVed { get; set; }
             public string ItsMarked { get; set; }
             public string ItsExcise { get; set; }
+            public string CdnCheck { get; set; }
 
 
 
@@ -2210,7 +2211,7 @@ namespace DiscountSystem
                         " HAVING ISNULL(price, 0) > 0;" +
                         " CREATE CLUSTERED INDEX tovar_code_index ON #t_t_nick_shop_num_cash (tovar_code ASC);" +
                         " CREATE CLUSTERED INDEX code_index ON #t_t2_nick_shop_num_cash (code ASC);" +
-                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise," +
+                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise,rr_mark," +
                         " COALESCE(#t_t2_nick_shop_num_cash.code, #t_t_nick_shop_num_cash.tovar_code) AS code," +
                         " CASE WHEN #t_t2_nick_shop_num_cash.personal_price IS NOT NULL THEN " +
                         " #t_t2_nick_shop_num_cash.personal_price " +
@@ -2255,6 +2256,7 @@ namespace DiscountSystem
                             tovar.TnVed = reader["tnved"].ToString();
                             tovar.ItsMarked = reader["its_marked"].ToString();
                             tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
+                            tovar.CdnCheck  = Convert.ToBoolean(reader["rr_mark"]).ToString();
                             loadPacketData.ListTovar.Add(tovar);
                         }
                     }
@@ -3048,7 +3050,7 @@ namespace DiscountSystem
                                                 "date_time_write," +
                                                 "its_deleted," +
                                                 "bonus_writen_off," +
-                                                "action," +
+                                                //"action," +
                                                 "sum_cash," +
                                                 "sum_terminal," +
                                                 "sum_certificate," +
@@ -3062,8 +3064,8 @@ namespace DiscountSystem
                                                 "clientInfo_vatin,"+
                                                 "clientInfo_name,"+
                                                 "sum_cash_remainder,"+
-                                                "num_order,"+
-                                                "VizaD,"+
+                                                //"num_order,"+
+                                                //"VizaD,"+
                                                 "sno,"+
                                                 "sum_cash1,"+
                                                 "sum_terminal1," +
@@ -3083,7 +3085,7 @@ namespace DiscountSystem
                                                 sph.Date_time_write + "'," +
                                                 sph.Its_deleted + "," +
                                                 sph.Bonus_writen_off + "," +
-                                                sph.Action + "," +
+                                                //sph.Action + "," +
                                                 sph.Sum_cash + "," +
                                                 sph.Sum_terminal + "," +
                                                 sph.Sum_certificate + ",'" +
@@ -3097,8 +3099,8 @@ namespace DiscountSystem
                                                 sph.ClientInfo_vatin+"','"+
                                                 sph.ClientInfo_name+"',"+
                                                 sph.SumCashRemainder+","+
-                                                sph.NumOrder+","+
-                                                sph.VizaD+","+
+                                                //sph.NumOrder+","+
+                                                //sph.VizaD+","+
                                                 sph.SystemTaxation+","+
                                                 sph.Sum_cash1+","+
                                                 sph.Sum_terminal1+","+
@@ -3121,7 +3123,7 @@ namespace DiscountSystem
                                                     "action1,"+
                                                     "action2,"+
                                                     "action3,"+
-                                                    "characteristic,"+
+                                                    //"characteristic,"+
                                                     "date_time_write,"+
                                                     "num_str,"+
                                                     "bonus_stand,"+
@@ -3141,7 +3143,7 @@ namespace DiscountSystem
                                             spt.Action1+","+
                                             spt.Action2+","+
                                             spt.Action3+",'"+
-                                            spt.Characteristic+"','"+
+                                            //spt.Characteristic+"','"+
                                             spt.Date_time_write+"',"+
                                             spt.Num_str+","+
                                             spt.Bonus_stand+","+
@@ -3153,6 +3155,13 @@ namespace DiscountSystem
                 }
                 //DateTime dt_start = DateTime.Now;
                 result = execute_insert_query(query_insert_data_on_sales.ToString(), 2, scheme);
+                if (result)
+                {
+                    if (scheme != "4")
+                    {
+                        execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
+                    }
+                }
                 //DateTime dt_finish = DateTime.Now;
                 //string query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
                 //    "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";
