@@ -14,6 +14,7 @@ using System.IO;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using System.IO.Compression;
+using System.Linq;
 
 
 namespace DiscountSystem
@@ -25,7 +26,7 @@ namespace DiscountSystem
     [WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
     [ToolboxItem(false)]
     public class DS : System.Web.Services.WebService
-    {
+    {       
 
         [WebMethod]
         public string HelloWorld()
@@ -37,6 +38,31 @@ namespace DiscountSystem
         public bool ServiceIsWorker()
         {
             return true;
+        }
+
+        private void check_sum_header_and_table(string shop,string num_cash,string scheme, DataTable dt)
+        {
+            // Фильтрация строк и подсчет суммы
+            var filteredData = from row in dt.AsEnumerable()
+                               group row by row.Field<string>("guid") into grp
+                               let total_sum_header = grp.Sum(r => r.Field<double>("sum_header"))
+                               let total_sum_table = grp.Sum(r => r.Field<double>("sum_table"))
+                               where total_sum_header != total_sum_table
+                               select new
+                               {
+                                   guid = grp.Key,
+                                   TotalSumHeader = total_sum_header,
+                                   TotalSumTable = total_sum_table
+                               };
+            if (filteredData != null && filteredData.Any())
+            {                
+                foreach (var item in filteredData)
+                {
+                    //MainStaticClass.write_event_in_log("guid: " + item.guid + " Сумма по шапке: " + item.TotalSumHeader + " Сумма по строкам: " + item.TotalSumTable, "Отправка чеков", "0");
+                    string info = "guid: " + item.guid + " Сумма по шапке: " + item.TotalSumHeader + " Сумма по строкам: " + item.TotalSumTable;
+                    insert_errors_GetDataForCasheV8Jason(shop, num_cash, info, scheme);
+                }
+            }
         }
 
         [WebMethod]
@@ -3004,8 +3030,23 @@ namespace DiscountSystem
         [WebMethod]
         public bool UploadDataOnSalesPortionJason(string nick_shop, string data, string scheme)
         {
-
             bool result = false;
+
+            DataTable dt = new DataTable();
+            DataColumn guid = new DataColumn();
+            guid.DataType = System.Type.GetType("System.String");
+            guid.ColumnName = "guid";
+            dt.Columns.Add(guid);
+
+            DataColumn sum_header = new DataColumn();
+            sum_header.DataType = System.Type.GetType("System.Double");
+            sum_header.ColumnName = "sum_header";
+            dt.Columns.Add(sum_header);
+
+            DataColumn sum_table = new DataColumn();
+            sum_table.DataType = System.Type.GetType("System.Double");
+            sum_table.ColumnName = "sum_table";
+            dt.Columns.Add(sum_table);
 
             string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
@@ -3037,6 +3078,15 @@ namespace DiscountSystem
                 //Соберем запрос из шапок документов
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
                 {
+                    ////////////////////////////////////////////////////////////////////////
+                    DataRow row = dt.NewRow();
+                    row["guid"] = sph.Guid;
+                    row["sum_header"] = Convert.ToDouble(sph.Sum_cash.Replace(".", ",")) +
+                        Convert.ToDouble(sph.Sum_terminal.Replace(".", ",")) +
+                        Convert.ToDouble(sph.Sum_certificate.Replace(".", ","));
+                    row["sum_table"] = 0;
+                    dt.Rows.Add(row);
+                    ////////////////////////////////////////////////////////////////////////
                     s = "INSERT INTO sales_header(shop," +
                                                 " num_doc," +
                                                 "num_cash," +
@@ -3111,6 +3161,13 @@ namespace DiscountSystem
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
                 {
+                    /////////////////////////////////////////////////////////////////////////////
+                    DataRow row = dt.NewRow();
+                    row["guid"] = spt.Guid;
+                    row["sum_header"] = 0;
+                    row["sum_table"] = Convert.ToDouble(spt.Sum_d.Replace(".", ","));
+                    dt.Rows.Add(row);
+                    //////////////////////////////////////////////////////////////////////////////
                     s = "INSERT INTO sales_table(shop,"+
                                                     "num_doc,"+
                                                     "num_cash,"+
@@ -3166,7 +3223,9 @@ namespace DiscountSystem
                 //string query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
                 //    "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";
                 //execute_insert_query(query, 2);
-            }         
+                //check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, scheme,dt);
+                check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, "4", dt);
+            }
 
             return result;
         }
