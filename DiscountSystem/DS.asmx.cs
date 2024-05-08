@@ -2233,11 +2233,13 @@ namespace DiscountSystem
                         " LEFT JOIN prices_by_price_types ON shops.UID_type_of_prices = prices_by_price_types.UID_type_of_prices " +
                         " WHERE shops.code = @nick_shop;" +
                         " SELECT tovar.code,prices.price AS personal_price INTO #t_t2_nick_shop_num_cash " +
-                        " FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  AND prices.characteristic IS NULL  GROUP BY code,price " +
+                        //" FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  AND prices.characteristic IS NULL  GROUP BY code,price " +
+                        " FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  GROUP BY code,price " +
                         " HAVING ISNULL(price, 0) > 0;" +
                         " CREATE CLUSTERED INDEX tovar_code_index ON #t_t_nick_shop_num_cash (tovar_code ASC);" +
                         " CREATE CLUSTERED INDEX code_index ON #t_t2_nick_shop_num_cash (code ASC);" +
-                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise,rr_mark," +
+                        //" SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise,rr_mark," +
+                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.its_marked,tovar.its_excise,rr_mark," +
                         " COALESCE(#t_t2_nick_shop_num_cash.code, #t_t_nick_shop_num_cash.tovar_code) AS code," +
                         " CASE WHEN #t_t2_nick_shop_num_cash.personal_price IS NOT NULL THEN " +
                         " #t_t2_nick_shop_num_cash.personal_price " +
@@ -2272,17 +2274,36 @@ namespace DiscountSystem
 
                         using (Tovar tovar = new Tovar())
                         {
-                            tovar.Code = reader["code"].ToString();
-                            tovar.Name = reader["name"].ToString();
-                            tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
-                            tovar.ItsDeleted = reader["its_deleted"].ToString();
-                            tovar.Nds = reader["nds"].ToString();
-                            tovar.ItsCertificate = reader["its_certificate"].ToString();
-                            tovar.PercentBonus = reader["percent_bonus"].ToString().Replace(",", ".");
-                            tovar.TnVed = reader["tnved"].ToString();
-                            tovar.ItsMarked = reader["its_marked"].ToString();
-                            tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
-                            tovar.CdnCheck  = Convert.ToBoolean(reader["rr_mark"]).ToString();
+                            if (scheme != "4")
+                            {
+                                tovar.Code = reader["code"].ToString();
+                                tovar.Name = reader["name"].ToString();
+                                tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
+                                tovar.ItsDeleted = reader["its_deleted"].ToString();
+                                tovar.Nds = reader["nds"].ToString();
+                                tovar.ItsCertificate = reader["its_certificate"].ToString();
+                                //tovar.PercentBonus = reader["percent_bonus"].ToString().Replace(",", ".");
+                                //tovar.TnVed = reader["tnved"].ToString();
+                                tovar.PercentBonus = "0";
+                                tovar.TnVed = "";
+                                tovar.ItsMarked = reader["its_marked"].ToString();
+                                tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
+                                tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
+                            }
+                            else
+                            {
+                                tovar.Code = reader["code"].ToString();
+                                tovar.Name = reader["name"].ToString();
+                                tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
+                                tovar.ItsDeleted = (Convert.ToBoolean(reader["its_deleted"]) == false ? "0" : "1");
+                                tovar.Nds = reader["nds"].ToString();
+                                tovar.ItsCertificate = (Convert.ToBoolean(reader["its_certificate"]) == false ? "0" : "1");//reader["its_certificate"].ToString();
+                                tovar.PercentBonus = "0";
+                                tovar.TnVed = "";
+                                tovar.ItsMarked = (Convert.ToBoolean(reader["its_marked"]) == false ? "0" : "1"); //reader["its_marked"].ToString();
+                                tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
+                                tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
+                            }
                             loadPacketData.ListTovar.Add(tovar);
                         }
                     }
@@ -2294,7 +2315,7 @@ namespace DiscountSystem
                     }
                     else
                     {
-                        query = " SELECT barcode.tovar_code, barcode.barcode  FROM tovar_barcode WHERE barcode.tovar_code in(" +
+                        query = " SELECT tovar_barcode.tovar_code, tovar_barcode.barcode  FROM tovar_barcode WHERE tovar_barcode.tovar_code in(" +
                                 " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
                     }
                     //" IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
@@ -2397,26 +2418,29 @@ namespace DiscountSystem
                     }
                     reader.Close();
 
-                    query = " SELECT characteristic.tovar_code, characteristic.guid, characteristic.name, prices.price AS retail_price" +
+                    if (scheme != "4")
+                    {
+                        query = " SELECT characteristic.tovar_code, characteristic.guid, characteristic.name, prices.price AS retail_price" +
                         " FROM characteristic LEFT JOIN prices ON characteristic.guid = prices.characteristic  where shop = '" + nick_shop + "' AND prices.characteristic is not null " +
                         " GROUP BY characteristic.tovar_code, characteristic.guid, characteristic.name,prices.price";
-                    command = new SqlCommand(query, conn);
-                    command.CommandTimeout = 120;
-                    reader = command.ExecuteReader();
+                        command = new SqlCommand(query, conn);
+                        command.CommandTimeout = 120;
+                        reader = command.ExecuteReader();
 
-                    loadPacketData.ListCharacteristic = new List<Characteristic>();
-                    while (reader.Read())
-                    {
-                        using (Characteristic characteristic = new Characteristic())
+                        loadPacketData.ListCharacteristic = new List<Characteristic>();
+                        while (reader.Read())
                         {
-                            characteristic.CodeTovar = reader["tovar_code"].ToString();
-                            characteristic.Guid = reader["guid"].ToString();
-                            characteristic.Name = reader["name"].ToString();
-                            characteristic.RetailPrice = reader["retail_price"].ToString().Replace(",", ".");
-                            loadPacketData.ListCharacteristic.Add(characteristic);
+                            using (Characteristic characteristic = new Characteristic())
+                            {
+                                characteristic.CodeTovar = reader["tovar_code"].ToString();
+                                characteristic.Guid = reader["guid"].ToString();
+                                characteristic.Name = reader["name"].ToString();
+                                characteristic.RetailPrice = reader["retail_price"].ToString().Replace(",", ".");
+                                loadPacketData.ListCharacteristic.Add(characteristic);
+                            }
                         }
+                        reader.Close();
                     }
-                    reader.Close();
 
                     query = "SELECT code,code_tovar,rating,is_active  FROM certificate";
                     command = new SqlCommand(query, conn);
@@ -3216,7 +3240,7 @@ namespace DiscountSystem
                 {
                     if (scheme != "4")
                     {
-                        execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
+                        bool result2 = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
                     }
                 }
                 //DateTime dt_finish = DateTime.Now;
