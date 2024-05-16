@@ -2190,6 +2190,7 @@ namespace DiscountSystem
         {
             DateTime dt_start = DateTime.Now;
             //string result = "-1";
+            scheme = "4";
             Byte[] result = Encoding.UTF8.GetBytes("-1");
                         
             if (check_avalible_dataV8(scheme))
@@ -2367,19 +2368,19 @@ namespace DiscountSystem
                             actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
                             actionHeader.sum1 = reader["sum_2"].ToString().Replace(",", ".");
                             actionHeader.Comment = reader["comment"].ToString().Trim();
-                            actionHeader.Marker = reader["mark"].ToString().Trim();
+                            actionHeader.Marker = (Convert.ToBoolean(reader["mark"]) == false ? "0" : "1");
                             actionHeader.ActionByDiscount = reader["disc_only"].ToString().Trim();
                             actionHeader.TimeStart = reader["time_start"].ToString().Trim();
                             actionHeader.TimeEnd = reader["time_end"].ToString().Trim();
-                            actionHeader.BonusPromotion = reader["bonus_promotion"].ToString().Trim();
-                            actionHeader.WithOldPromotion = reader["with_old_promotion"].ToString().Trim();
-                            actionHeader.Monday = reader["day_mon"].ToString().Trim();
-                            actionHeader.Tuesday = reader["day_tue"].ToString().Trim();
-                            actionHeader.Wednesday = reader["day_wed"].ToString().Trim();
-                            actionHeader.Thursday = reader["day_thu"].ToString().Trim();
-                            actionHeader.Friday = reader["day_fri"].ToString().Trim();
-                            actionHeader.Saturday = reader["day_sat"].ToString().Trim();
-                            actionHeader.Sunday = reader["day_sun"].ToString().Trim();
+                            actionHeader.BonusPromotion = (Convert.ToBoolean(reader["bonus_promotion"]) == false ? "0" : "1");
+                            actionHeader.WithOldPromotion = (Convert.ToBoolean(reader["with_old_promotion"]) == false ? "0" : "1");
+                            actionHeader.Monday = (Convert.ToBoolean(reader["day_mon"]) == false ? "0" : "1"); //reader["day_mon"].ToString().Trim();
+                            actionHeader.Tuesday = (Convert.ToBoolean(reader["day_tue"]) == false ? "0" : "1"); //reader["day_tue"].ToString().Trim();
+                            actionHeader.Wednesday = (Convert.ToBoolean(reader["day_wed"]) == false ? "0" : "1");// reader["day_wed"].ToString().Trim();
+                            actionHeader.Thursday = (Convert.ToBoolean(reader["day_thu"]) == false ? "0" : "1");// reader["day_thu"].ToString().Trim();
+                            actionHeader.Friday = (Convert.ToBoolean(reader["day_fri"]) == false ? "0" : "1"); //reader["day_fri"].ToString().Trim();
+                            actionHeader.Saturday = (Convert.ToBoolean(reader["day_sat"]) == false ? "0" : "1"); //reader["day_sat"].ToString().Trim();
+                            actionHeader.Sunday = (Convert.ToBoolean(reader["day_sun"]) == false ? "0" : "1"); //reader["day_sun"].ToString().Trim();
                             actionHeader.PromoCode = reader["promo_code"].ToString().Trim();
                             actionHeader.SumBonus = reader["sum_bonus"].ToString().Trim();
                             actionHeader.ExecutionOrder = reader["execution_order"].ToString().Trim();
@@ -2605,7 +2606,7 @@ namespace DiscountSystem
         public string GetDataForCasheV8Successfully(string nick_shop, string data,string scheme)
         {
             string result = "1";
-
+            scheme = "4";
             if (check_avalible_dataV8(scheme))
             {
                 return result = "-1";
@@ -2680,6 +2681,7 @@ namespace DiscountSystem
         public string OnlineCasheV8Successfully(string nick_shop, string data,string scheme)
         {
             string result = "1";
+            scheme = "4";
 
             if (check_avalible_dataV8(scheme))
             {
@@ -2772,6 +2774,7 @@ namespace DiscountSystem
             //string result = "-1";
             Byte[] result = Encoding.UTF8.GetBytes("-1");
 
+            //scheme = "4";
 
             if (check_avalible_dataV8(scheme))
             {
