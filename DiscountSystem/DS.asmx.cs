@@ -2774,7 +2774,7 @@ namespace DiscountSystem
             //string result = "-1";
             Byte[] result = Encoding.UTF8.GetBytes("-1");
 
-            //scheme = "4";
+            scheme = "4";
 
             if (check_avalible_dataV8(scheme))
             {
