@@ -1834,7 +1834,7 @@ namespace DiscountSystem
             public string Version { get; set; }
             public string NickShop { get; set; }
             public string CodeShop { get; set; }
-            public string Guid { get; set; }
+            //public string Guid { get; set; }
             public List<DeletedItem> ListDeletedItem { get; set; }
 
             void IDisposable.Dispose()
@@ -1863,21 +1863,18 @@ namespace DiscountSystem
             DeletedItems deletedItems = JsonConvert.DeserializeObject<DeletedItems>(decrypt_data);
 
             StringBuilder sb = new StringBuilder();
+            HashSet<string> uniqueGuids = new HashSet<string>();
+
             foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
             {
-                //sb.Append("DELETE FROM deleted_items WHERE " +
-                //    "shop='" + nick_shop +
-                //    "' AND num_doc=" + deletedItem.num_doc +
-                //    "  AND num_cash=" + deletedItem.num_cash +
-                //    "  AND date_time_start='" + deletedItem.date_time_start +
-                //    "' AND date_time_action='" + deletedItem.date_time_action +
-                //    "' AND tovar=" + deletedItem.tovar +
-                //    "  AND quantity=" + deletedItem.quantity +
-                //    "  AND type_of_operation=" + deletedItem.type_of_operation +
-                //    "  AND guid ='" + deletedItem.guid + "';");
-
-                sb.Append("DELETE FROM deleted_items WHERE guid ='" + deletedItem.guid + "';");
-
+                if (uniqueGuids.Add(deletedItem.guid))
+                {
+                    sb.Append("DELETE FROM deleted_items WHERE guid ='" + deletedItem.guid + "';");
+                }            
+            }
+                
+            foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
+            {
                 sb.Append("INSERT INTO deleted_items" +
                     "    (shop" +
                     "    ,num_doc" +
@@ -2038,8 +2035,7 @@ namespace DiscountSystem
             public string ItsMarked { get; set; }
             public string ItsExcise { get; set; }
             public string CdnCheck { get; set; }
-
-
+            public string Fractional { get; set; }
 
             void IDisposable.Dispose()
             {
@@ -2240,7 +2236,7 @@ namespace DiscountSystem
                         " CREATE CLUSTERED INDEX tovar_code_index ON #t_t_nick_shop_num_cash (tovar_code ASC);" +
                         " CREATE CLUSTERED INDEX code_index ON #t_t2_nick_shop_num_cash (code ASC);" +
                         //" SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise,rr_mark," +
-                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.its_marked,tovar.its_excise,rr_mark," +
+                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.its_marked,tovar.its_excise,rr_mark,fractional_quantity," +
                         " COALESCE(#t_t2_nick_shop_num_cash.code, #t_t_nick_shop_num_cash.tovar_code) AS code," +
                         " CASE WHEN #t_t2_nick_shop_num_cash.personal_price IS NOT NULL THEN " +
                         " #t_t2_nick_shop_num_cash.personal_price " +
@@ -2290,6 +2286,7 @@ namespace DiscountSystem
                                 tovar.ItsMarked = reader["its_marked"].ToString();
                                 tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
                                 tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
+                                tovar.Fractional = Convert.ToBoolean(reader["fractional_quantity"]).ToString();
                             }
                             else
                             {
@@ -2304,6 +2301,7 @@ namespace DiscountSystem
                                 tovar.ItsMarked = (Convert.ToBoolean(reader["its_marked"]) == false ? "0" : "1"); //reader["its_marked"].ToString();
                                 tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
                                 tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
+                                tovar.Fractional = Convert.ToBoolean(reader["fractional_quantity"]).ToString();
                             }
                             loadPacketData.ListTovar.Add(tovar);
                         }
