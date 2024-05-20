@@ -2174,6 +2174,65 @@ namespace DiscountSystem
             return byteArray;
         }
 
+        [WebMethod]
+        public string GetTovarCheckCDN(string nick_shop, string data, string scheme)
+        {
+            string result = "1";
+            scheme = "4";
+            if (check_avalible_dataV8(scheme))
+            {
+                return result = "-1";
+            }
+
+            //Проверка доступа 
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result = "-1";
+            }
+
+            if (nick_shop.Trim().Length == 0)
+            {
+                return result = "-1";
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+            if (decrypt_data != code_shop)
+            {
+                result = "-1";
+            }
+            else
+            {
+                SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
+                try
+                {
+                    conn.Open();
+                    string query = "SELECT CDN_verification_enabled FROM shops where code ='" + nick_shop + "'";
+                    SqlCommand command = new SqlCommand(query, conn);
+                    result = Convert.ToInt16(command.ExecuteScalar()).ToString();
+                    conn.Close();
+                    command.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    result = "-1";
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
+                }
+            }
+            result = CryptorEngine.Encrypt(result, true, key);
+            return result;
+        }
+
+
+
         /// <summary>
         /// Эта функция собирает информацию для кассы по ее коду
         /// 
