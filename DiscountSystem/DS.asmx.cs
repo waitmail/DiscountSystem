@@ -2694,7 +2694,8 @@ namespace DiscountSystem
             {
                 conn.Open();
                 string query = "UPDATE cashbox SET version = " + resultGetData.Version + " ,date_time_import = '" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'," +
-                                       "verOS='" + resultGetData.OSVersion +"',device_info='"+resultGetData.DeviceInfo+"' " +
+                                       "verOS='" + resultGetData.OSVersion +"',device_info='"+resultGetData.DeviceInfo+"' ," +
+                                       " printing_library = " + resultGetData.PrintingLibraryes +
                     " WHERE shop='" + nick_shop + "' AND num_cash=" + resultGetData.NumCash;
                 SqlCommand command = new SqlCommand(query, conn);
                 int result_update = command.ExecuteNonQuery();
@@ -2770,7 +2771,8 @@ namespace DiscountSystem
             try
             {
                 conn.Open();
-                string query = "UPDATE cashbox SET version = " + resultGetData.Version + " ,date_time_online = '" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'" +
+                string query = "UPDATE cashbox SET version = " + resultGetData.Version + " ,date_time_online = '" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'," +
+                    "printing_library = "+ resultGetData.PrintingLibraryes +
                     " WHERE shop='" + nick_shop + "' AND num_cash=" + resultGetData.NumCash;
                 SqlCommand command = new SqlCommand(query, conn);
                 int result_update = command.ExecuteNonQuery();
@@ -2780,11 +2782,13 @@ namespace DiscountSystem
                         "shop" +
                         ",num_cash" +
                         ",version" +
-                        ",date_time_online)VALUES('" +
+                        ",date_time_online"+
+                        "printing_library,)VALUES('" +
                         nick_shop + "'," +
                         resultGetData.NumCash + "," +
                         resultGetData.Version + ",'" +
-                        DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "')";
+                        DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "',"+
+                        resultGetData.PrintingLibraryes+")";
                     command = new SqlCommand(query, conn);
                     result_update = command.ExecuteNonQuery();
                 }
@@ -2816,6 +2820,7 @@ namespace DiscountSystem
             public string Version { get; set; }
             public string OSVersion { get; set; }
             public string DeviceInfo { get; set; }
+            public string PrintingLibraryes { get; set; }
         }
 
         /// <summary>
