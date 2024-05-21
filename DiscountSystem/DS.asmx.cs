@@ -1177,380 +1177,380 @@ namespace DiscountSystem
             return result;
         }
         
-        /// <summary>
-        /// 1  онлайн
-        /// 0  офлайн
-        /// -1 ошибка такой возврат может быть и открытым если не удалось получить код магазина
-        /// -2 нет сотрудника с таким кодом 
-        /// -3 не найден магазин с таким кодом
-        /// </summary>
-        /// <param name="nick_shop"></param>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        [WebMethod]
-        public string ChangeStatusWorkerOnline(string nick_shop, string data, string scheme)
-        {
-            string result = "";
-            string worker_name = "";
+        ///// <summary>
+        ///// 1  онлайн
+        ///// 0  офлайн
+        ///// -1 ошибка такой возврат может быть и открытым если не удалось получить код магазина
+        ///// -2 нет сотрудника с таким кодом 
+        ///// -3 не найден магазин с таким кодом
+        ///// </summary>
+        ///// <param name="nick_shop"></param>
+        ///// <param name="data"></param>
+        ///// <returns></returns>
+        //[WebMethod]
+        //public string ChangeStatusWorkerOnline(string nick_shop, string data, string scheme)
+        //{
+        //    string result = "";
+        //    string worker_name = "";
 
 
-            string code_shop = get_id_database(nick_shop, scheme);
-            if (code_shop.Trim().Length == 0)
-            {
-                result = "-3";
-                return result;
-            }
+        //    string code_shop = get_id_database(nick_shop, scheme);
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        result = "-3";
+        //        return result;
+        //    }
 
-            string count_day = CryptorEngine.get_count_day();
-            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
 
-            string[] delimiters = new string[] { "|" };
-            string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
-            string[] d = decrypt_data.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+        //    string[] delimiters = new string[] { "|" };
+        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+        //    string[] d = decrypt_data.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
-           // string worker_code = d[1];
-            string worker_code = get_workers_code(d[1]);
-            if (worker_code == "")
-            {
-                result = "-1";
-            }
+        //   // string worker_code = d[1];
+        //    string worker_code = get_workers_code(d[1]);
+        //    if (worker_code == "")
+        //    {
+        //        result = "-1";
+        //    }
 
-            string code_event = "";
-            string code_event_insert = "";
+        //    string code_event = "";
+        //    string code_event_insert = "";
 
-            //string shop="";
-            //string online = "";//1 онлайн 0 офлайн
-            //string date_time_event = "";
+        //    //string shop="";
+        //    //string online = "";//1 онлайн 0 офлайн
+        //    //string date_time_event = "";
 
-            SqlConnection conn = new SqlConnection(getConnectionString5());
-            SqlTransaction tran = null;
-            try
-            {
-                conn.Open();
-                tran = conn.BeginTransaction();
-                string query = "SELECT COUNT(*) FROM events WHERE worker_code = '" + worker_code + "'";
-                SqlCommand command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                long count_events = Convert.ToInt64(command.ExecuteScalar());
+        //    SqlConnection conn = new SqlConnection(getConnectionString5());
+        //    SqlTransaction tran = null;
+        //    try
+        //    {
+        //        conn.Open();
+        //        tran = conn.BeginTransaction();
+        //        string query = "SELECT COUNT(*) FROM events WHERE worker_code = '" + worker_code + "'";
+        //        SqlCommand command = new SqlCommand(query, conn);
+        //        command.Transaction = tran;
+        //        long count_events = Convert.ToInt64(command.ExecuteScalar());
 
-                if (count_events > 0)
-                {
-                    query = "SELECT SUM(event) FROM events WHERE worker_code = '" + worker_code + "'";
-                    command = new SqlCommand(query, conn);
-                    command.Transaction = tran;
-                    count_events = Convert.ToInt64(command.ExecuteScalar());
-                }
+        //        if (count_events > 0)
+        //        {
+        //            query = "SELECT SUM(event) FROM events WHERE worker_code = '" + worker_code + "'";
+        //            command = new SqlCommand(query, conn);
+        //            command.Transaction = tran;
+        //            count_events = Convert.ToInt64(command.ExecuteScalar());
+        //        }
 
-                //if (count_events != null)
-                //{
-                //code_event = result_query.ToString();
-                if (count_events == 0)
-                {
-                    query = "UPDATE  workers SET status=1 WHERE code = '" + worker_code + "'";
-                    code_event = "1";
-                }
-                else
-                {
-                    query = "UPDATE  workers SET status=0 WHERE code = '" + worker_code + "'";
-                    code_event = "-1";
-                }
+        //        //if (count_events != null)
+        //        //{
+        //        //code_event = result_query.ToString();
+        //        if (count_events == 0)
+        //        {
+        //            query = "UPDATE  workers SET status=1 WHERE code = '" + worker_code + "'";
+        //            code_event = "1";
+        //        }
+        //        else
+        //        {
+        //            query = "UPDATE  workers SET status=0 WHERE code = '" + worker_code + "'";
+        //            code_event = "-1";
+        //        }
 
-                command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                command.ExecuteNonQuery();
+        //        command = new SqlCommand(query, conn);
+        //        command.Transaction = tran;
+        //        command.ExecuteNonQuery();
 
-                query = "INSERT INTO events(event,worker_code,date_time,shop)VALUES(" +
-                code_event + ",'" +
-                worker_code + "','" +
-                DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "','" +
-                nick_shop + "')";
+        //        query = "INSERT INTO events(event,worker_code,date_time,shop)VALUES(" +
+        //        code_event + ",'" +
+        //        worker_code + "','" +
+        //        DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "','" +
+        //        nick_shop + "')";
 
-                command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                command.ExecuteNonQuery();
+        //        command = new SqlCommand(query, conn);
+        //        command.Transaction = tran;
+        //        command.ExecuteNonQuery();
 
-                query = "SELECT worker FROM workers WHERE code = '" + worker_code + "'";
-                command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                worker_name = command.ExecuteScalar().ToString();
-                //}
-                //else
-                //{
-                //    code_event = "-2";
-                //}
+        //        query = "SELECT worker FROM workers WHERE code = '" + worker_code + "'";
+        //        command = new SqlCommand(query, conn);
+        //        command.Transaction = tran;
+        //        worker_name = command.ExecuteScalar().ToString();
+        //        //}
+        //        //else
+        //        //{
+        //        //    code_event = "-2";
+        //        //}
 
-                tran.Commit();
-                conn.Close();
-            }
-            catch (SqlException)
-            {
-                if (tran != null)
-                {
-                    tran.Rollback();
-                }
-                result = "-1";
-                code_event = "-1";
-            }
-            catch (Exception)
-            {
-                if (tran != null)
-                {
-                    tran.Rollback();
-                }
-                result = "-1";
-                code_event = "-1";
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    conn.Close();
-                }
-            }
+        //        tran.Commit();
+        //        conn.Close();
+        //    }
+        //    catch (SqlException)
+        //    {
+        //        if (tran != null)
+        //        {
+        //            tran.Rollback();
+        //        }
+        //        result = "-1";
+        //        code_event = "-1";
+        //    }
+        //    catch (Exception)
+        //    {
+        //        if (tran != null)
+        //        {
+        //            tran.Rollback();
+        //        }
+        //        result = "-1";
+        //        code_event = "-1";
+        //    }
+        //    finally
+        //    {
+        //        if (conn.State == ConnectionState.Open)
+        //        {
+        //            conn.Close();
+        //        }
+        //    }
 
-            code_event += "|" + worker_name;
+        //    code_event += "|" + worker_name;
 
-            result = CryptorEngine.Encrypt(code_event, true, key);
+        //    result = CryptorEngine.Encrypt(code_event, true, key);
 
-            return result;
-        }
+        //    return result;
+        //}
         
-        /// <summary>
-        /// 0 нет такой записи
-        /// 1 есть такая запись
-        /// -1 ошибка обработки
-        /// </summary>
-        /// <returns></returns>
-        private int check_data_offline_record(string record, string nick_shop)
-        {
-            int result = 0;
+        ///// <summary>
+        ///// 0 нет такой записи
+        ///// 1 есть такая запись
+        ///// -1 ошибка обработки
+        ///// </summary>
+        ///// <returns></returns>
+        //private int check_data_offline_record(string record, string nick_shop)
+        //{
+        //    int result = 0;
 
-            string[] delimiters = new string[] { "," };
-            string[] d = record.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+        //    string[] delimiters = new string[] { "," };
+        //    string[] d = record.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
-            SqlConnection conn = new SqlConnection(getConnectionString5());
+        //    SqlConnection conn = new SqlConnection(getConnectionString5());
 
-            try
-            {
-                conn.Open();
-                string query = "SELECT COUNT(*) FROM events WHERE worker_code='" 
-                    + d[0] + "' AND date_time='" + d[1] + "' AND shop='" + nick_shop+"'";
-                SqlCommand command = new SqlCommand(query, conn);
-                result = Convert.ToInt16(command.ExecuteScalar());
-                conn.Close();
-            }
-            catch
-            {
-                result = -1;
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    conn.Close();
-                }
-            }
+        //    try
+        //    {
+        //        conn.Open();
+        //        string query = "SELECT COUNT(*) FROM events WHERE worker_code='" 
+        //            + d[0] + "' AND date_time='" + d[1] + "' AND shop='" + nick_shop+"'";
+        //        SqlCommand command = new SqlCommand(query, conn);
+        //        result = Convert.ToInt16(command.ExecuteScalar());
+        //        conn.Close();
+        //    }
+        //    catch
+        //    {
+        //        result = -1;
+        //    }
+        //    finally
+        //    {
+        //        if (conn.State == ConnectionState.Open)
+        //        {
+        //            conn.Close();
+        //        }
+        //    }
             
-            return result;
-        }
+        //    return result;
+        //}
         
-        private string get_workers_code(string barcode)
-        {
-            string result = "";
+        //private string get_workers_code(string barcode)
+        //{
+        //    string result = "";
 
-            SqlConnection conn = new SqlConnection(getConnectionString5());
+        //    SqlConnection conn = new SqlConnection(getConnectionString5());
 
-            try
-            {
-                conn.Open();
-                string query = "SELECT code FROM workers WHERE barcode='"+barcode+"'";
-                SqlCommand command = new SqlCommand(query, conn);
-                SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    result = reader["code"].ToString();                    
-                }
-                reader.Close();
-                conn.Close();
-            }
-            catch
-            {
+        //    try
+        //    {
+        //        conn.Open();
+        //        string query = "SELECT code FROM workers WHERE barcode='"+barcode+"'";
+        //        SqlCommand command = new SqlCommand(query, conn);
+        //        SqlDataReader reader = command.ExecuteReader();
+        //        while (reader.Read())
+        //        {
+        //            result = reader["code"].ToString();                    
+        //        }
+        //        reader.Close();
+        //        conn.Close();
+        //    }
+        //    catch
+        //    {
 
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    conn.Close();
-                }
-            }
+        //    }
+        //    finally
+        //    {
+        //        if (conn.State == ConnectionState.Open)
+        //        {
+        //            conn.Close();
+        //        }
+        //    }
             
 
-            return result; 
-        }
+        //    return result; 
+        //}
         
-        /// <summary>
-        /// вставка записи 
-        /// 1  Успех
-        /// -1 Ошибка
-        /// </summary>
-        /// <param name="record"></param>
-        /// <param name="nick_shop"></param>
-        /// <returns></returns>
-        private int insert_data_offline_record(string record,string nick_shop)
-        {
-            int result = 1;
+//        /// <summary>
+//        /// вставка записи 
+//        /// 1  Успех
+//        /// -1 Ошибка
+//        /// </summary>
+//        /// <param name="record"></param>
+//        /// <param name="nick_shop"></param>
+//        /// <returns></returns>
+//        private int insert_data_offline_record(string record,string nick_shop)
+//        {
+//            int result = 1;
 
-            string[] delimiters = new string[] { "," };
-            string[] d = record.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+//            string[] delimiters = new string[] { "," };
+//            string[] d = record.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
-            SqlConnection conn = new SqlConnection(getConnectionString5());
-            SqlTransaction tran = null;
-            try
-            {
-                conn.Open();
-                tran = conn.BeginTransaction();
+//            SqlConnection conn = new SqlConnection(getConnectionString5());
+//            SqlTransaction tran = null;
+//            try
+//            {
+//                conn.Open();
+//                tran = conn.BeginTransaction();
 
-                //worker_code заменяем
-                string code = get_workers_code(d[0]);
-                if (code == "")
-                {
-                    //result = -1;
-                    //return result;
-                    code = "99999999999";
-                }
+//                //worker_code заменяем
+//                string code = get_workers_code(d[0]);
+//                if (code == "")
+//                {
+//                    //result = -1;
+//                    //return result;
+//                    code = "99999999999";
+//                }
 
-                //string query = "INSERT INTO events(event,worker_code,date_time,shop)VALUES(" +                    
-                //    d[2]+ ",'" +
-                //    d[0]+ "','" +
-                //    d[1]+"','" + 
-                //    nick_shop+"')";       
-                //СНАЧАЛА УДАЛИМ 
-                string query = "DELETE events WHERE date_time ='" + d[1] + "'  AND shop='" + nick_shop + "' and worker_code=" + d[0];
-                SqlCommand command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                command.ExecuteNonQuery();
-                //КОНЕЦ сНАЧАЛА УДАЛИМ
+//                //string query = "INSERT INTO events(event,worker_code,date_time,shop)VALUES(" +                    
+//                //    d[2]+ ",'" +
+//                //    d[0]+ "','" +
+//                //    d[1]+"','" + 
+//                //    nick_shop+"')";       
+//                //СНАЧАЛА УДАЛИМ 
+//                string query = "DELETE events WHERE date_time ='" + d[1] + "'  AND shop='" + nick_shop + "' and worker_code=" + d[0];
+//                SqlCommand command = new SqlCommand(query, conn);
+//                command.Transaction = tran;
+//                command.ExecuteNonQuery();
+//                //КОНЕЦ сНАЧАЛА УДАЛИМ
 
-                query = "INSERT INTO events(event,worker_code,date_time,shop)VALUES(" +
-                   d[2] + ",'" +
-                   code + "','" +
-                   d[1] + "','" +
-                   nick_shop + "')";       
-                command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                command.ExecuteNonQuery();
+//                query = "INSERT INTO events(event,worker_code,date_time,shop)VALUES(" +
+//                   d[2] + ",'" +
+//                   code + "','" +
+//                   d[1] + "','" +
+//                   nick_shop + "')";       
+//                command = new SqlCommand(query, conn);
+//                command.Transaction = tran;
+//                command.ExecuteNonQuery();
 
-//                query = "SELECT SUM(event) FROM events WHERE worker_code = '" + d[0] + "'";
-                query = "SELECT SUM(event) FROM events WHERE worker_code = '" + code + "'";
-                command = new SqlCommand(query, conn);
-                command.Transaction = tran;
-                object result_query = command.ExecuteScalar();
-                if (result_query != null)
-                {
-                    if (Convert.ToInt16(result_query) == 0)
-                    {
-                        query = "UPDATE  workers SET status=1 WHERE code = '" + code + "'";
-                    }
-                    else
-                    {
-                        query = "UPDATE  workers SET status=0 WHERE code = '" + code + "'";
-                    }
+////                query = "SELECT SUM(event) FROM events WHERE worker_code = '" + d[0] + "'";
+//                query = "SELECT SUM(event) FROM events WHERE worker_code = '" + code + "'";
+//                command = new SqlCommand(query, conn);
+//                command.Transaction = tran;
+//                object result_query = command.ExecuteScalar();
+//                if (result_query != null)
+//                {
+//                    if (Convert.ToInt16(result_query) == 0)
+//                    {
+//                        query = "UPDATE  workers SET status=1 WHERE code = '" + code + "'";
+//                    }
+//                    else
+//                    {
+//                        query = "UPDATE  workers SET status=0 WHERE code = '" + code + "'";
+//                    }
 
-                    command = new SqlCommand(query, conn);
-                    command.Transaction = tran;
-                    command.ExecuteNonQuery();
-                }
-                tran.Commit();
-                conn.Close();
-            }
-            catch (SqlException)
-            {
-                if (tran != null)
-                {
-                    tran.Rollback();
-                }
-                result = -1;
-            }
-            catch (Exception)
-            {
-                if (tran != null)
-                {
-                    tran.Rollback();
-                }
-                result = -1;
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    conn.Close();
-                }
-            }
+//                    command = new SqlCommand(query, conn);
+//                    command.Transaction = tran;
+//                    command.ExecuteNonQuery();
+//                }
+//                tran.Commit();
+//                conn.Close();
+//            }
+//            catch (SqlException)
+//            {
+//                if (tran != null)
+//                {
+//                    tran.Rollback();
+//                }
+//                result = -1;
+//            }
+//            catch (Exception)
+//            {
+//                if (tran != null)
+//                {
+//                    tran.Rollback();
+//                }
+//                result = -1;
+//            }
+//            finally
+//            {
+//                if (conn.State == ConnectionState.Open)
+//                {
+//                    conn.Close();
+//                }
+//            }
 
-            return result;
-        }
+//            return result;
+//        }
         
-        [WebMethod]
-        public int ChangeStatusWorkerOffline(string nick_shop, string data, string scheme)
-        {
-            int result = 1;
-            //string worker_name = "";
+        //[WebMethod]
+        //public int ChangeStatusWorkerOffline(string nick_shop, string data, string scheme)
+        //{
+        //    int result = 1;
+        //    //string worker_name = "";
 
 
-            string code_shop = get_id_database(nick_shop, scheme);
+        //    string code_shop = get_id_database(nick_shop, scheme);
 
-            if (code_shop.Trim().Length == 0)
-            {
-                result = -3;
-                return result;
-            }
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        result = -3;
+        //        return result;
+        //    }
 
-            string count_day = CryptorEngine.get_count_day();
-            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
 
-            string[] delimiters = new string[] { "||" };
-            string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
-            string[] d = decrypt_data.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
-            delimiters = new string[] { "|" };
-            string[] d2 = d[1].Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+        //    string[] delimiters = new string[] { "||" };
+        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+        //    string[] d = decrypt_data.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+        //    delimiters = new string[] { "|" };
+        //    string[] d2 = d[1].Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 
-            SqlConnection conn = new SqlConnection(getConnectionString5());
+        //    SqlConnection conn = new SqlConnection(getConnectionString5());
 
-            try
-            {
-                foreach (string str in d2)
-                {
-                    //1. Проверка наличия уже такой записи
-                    int result_check = check_data_offline_record(str, nick_shop);
-                    if (result_check == 0)//нет такой записи надо вставить
-                    {
-                        int result_insert = insert_data_offline_record(str, nick_shop);
-                        if (result_insert == -1)
-                        {
-                            result = -1;
-                            return result;
-                        }
-                    }
-                    else if (result_check == -1) //Произошли ошибки выходим из обработки 
-                    {
-                        result = -1;
-                        return result;
-                    }
-                }
-            }
+        //    try
+        //    {
+        //        foreach (string str in d2)
+        //        {
+        //            //1. Проверка наличия уже такой записи
+        //            int result_check = check_data_offline_record(str, nick_shop);
+        //            if (result_check == 0)//нет такой записи надо вставить
+        //            {
+        //                int result_insert = insert_data_offline_record(str, nick_shop);
+        //                if (result_insert == -1)
+        //                {
+        //                    result = -1;
+        //                    return result;
+        //                }
+        //            }
+        //            else if (result_check == -1) //Произошли ошибки выходим из обработки 
+        //            {
+        //                result = -1;
+        //                return result;
+        //            }
+        //        }
+        //    }
 
-            catch (Exception)
-            {
-                result = -1;
-            }
-            finally
-            {
+        //    catch (Exception)
+        //    {
+        //        result = -1;
+        //    }
+        //    finally
+        //    {
 
-            }
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
                        
         private bool execute_insert_query(string query,int variant,string scheme)
         {
