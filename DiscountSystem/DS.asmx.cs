@@ -1068,6 +1068,11 @@ namespace DiscountSystem
         {
             string result = "-1";                
             
+            if(DateTime.Now>new DateTime(2024, 5, 23))
+            {
+                scheme = "4";
+            }
+
             string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
             {
