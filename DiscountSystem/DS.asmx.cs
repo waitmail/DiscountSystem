@@ -686,13 +686,13 @@ namespace DiscountSystem
                     {
                         if (param[6] == "0")//Это продажа сертификата
                         {
-                            is_active = "1";
+                            is_active = "true";
                             activation = "'" + param[0] + " " + descripton + "'";
                             deactivation = "''";
                         }
                         else//Это возврат сертификата
                         {
-                            is_active = "0";
+                            is_active = "false";
                             activation = "''";
                             deactivation = "'" + param[0] + " " + descripton + "'";
                         }
@@ -1105,6 +1105,7 @@ namespace DiscountSystem
                 object result_query = command.ExecuteScalar();
                 if (result_query != null)
                 {
+                    result_query = (Convert.ToBoolean(result_query) == false ? "0" : "1");
                     result = CryptorEngine.Encrypt(result_query.ToString(),true,key);
                 }
             }
