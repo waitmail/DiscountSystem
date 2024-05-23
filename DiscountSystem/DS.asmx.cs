@@ -645,6 +645,11 @@ namespace DiscountSystem
         {
             string result = "1";
 
+            if (DateTime.Now > new DateTime(2024, 5, 23))
+            {
+                scheme = "4";
+            }
+
             string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
             {
@@ -1083,9 +1088,18 @@ namespace DiscountSystem
             string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();                
             string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
             SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
+            string query = "";
             try
             {
-                string query = "SELECT is_active FROM certificate WHERE code="+decrypt_data;
+
+                if (scheme == "4")
+                {
+                    query = " SELECT is_active FROM certificate WHERE code = " + decrypt_data + " AND network_ID in(SELECT network_ID FROM shops where code='" + nick_shop + "')";
+                }
+                else
+                {
+                    query = " SELECT is_active FROM certificate WHERE code = " + decrypt_data;
+                }
                 conn.Open();
                 SqlCommand command = new SqlCommand(query,conn);
                 object result_query = command.ExecuteScalar();
@@ -2505,7 +2519,8 @@ namespace DiscountSystem
                         reader.Close();
                     }
 
-                    query = "SELECT code,code_tovar,rating,is_active  FROM certificate";
+                    //query = "SELECT code,code_tovar,rating,is_active  FROM certificate";
+                    query = " SELECT code,code_tovar,rating,is_active FROM certificate WHERE network_ID in(SELECT network_ID FROM shops where code='" + nick_shop + "')";
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
@@ -2518,7 +2533,7 @@ namespace DiscountSystem
                             sertificate.Code = reader["code"].ToString();
                             sertificate.CodeTovar = reader["code_tovar"].ToString();
                             sertificate.Rating = reader["rating"].ToString();
-                            sertificate.IsActive = reader["is_active"].ToString();
+                            sertificate.IsActive = (Convert.ToBoolean(reader["is_active"]) == false ? "0" : "1"); // reader["is_active"].ToString();
                             loadPacketData.ListSertificate.Add(sertificate);
                         }
                     }
