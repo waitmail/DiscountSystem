@@ -644,12 +644,9 @@ namespace DiscountSystem
         public string SetStatusSertificat(string nick_shop, string data, string scheme)
         {
             string result = "1";
-
-            if (DateTime.Now > new DateTime(2024, 5, 23))
-            {
-                scheme = "4";
-            }
-
+            
+            scheme = "4";
+            
             string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
             {
@@ -686,13 +683,13 @@ namespace DiscountSystem
                     {
                         if (param[6] == "0")//Это продажа сертификата
                         {
-                            is_active = "true";
+                            is_active = "1";
                             activation = "'" + param[0] + " " + descripton + "'";
                             deactivation = "''";
                         }
                         else//Это возврат сертификата
                         {
-                            is_active = "false";
+                            is_active = "0";
                             activation = "''";
                             deactivation = "'" + param[0] + " " + descripton + "'";
                         }
@@ -721,7 +718,8 @@ namespace DiscountSystem
                     " num_cash" + "," +
                     " num_doc" + "," +
                     " date_time_write" + "," +
-                    " date_time_unloading) VALUES(" +
+                    " date_time_unloading," +
+                    " network_ID) VALUES(" +
                     param[4] + "," +
                     param[1] + "," +
                     (deactivation == "''" ? "1" : "-1") + ",'" +
@@ -729,7 +727,8 @@ namespace DiscountSystem
                     param[3] + "," +
                     param[0] + ",'" +
                     param[5] + "','" +
-                    DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "')";
+                    DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'," +
+                    get_network_id(nick_shop)+")";
 
                     command = new SqlCommand(query, conn);
                     command.Transaction = trans;
@@ -754,6 +753,38 @@ namespace DiscountSystem
                     trans.Rollback();
                 }
                 result = "-1";                
+            }
+            finally
+            {
+                if (conn.State == ConnectionState.Open)
+                {
+                    conn.Close();
+                }
+            }
+
+            return result;
+        }
+
+
+        private string get_network_id(string nick_shop)
+        {
+            string result = "";
+            string scheme = "4";
+
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
+
+            try
+            {
+                conn.Open();
+                string query = "SELECT network_ID FROM shops where code='" + nick_shop + "'";
+                SqlCommand command = new SqlCommand(query, conn);
+                result  = command.ExecuteScalar().ToString();
+                conn.Close();
+                command.Dispose();
+            }
+            catch
+            {
+
             }
             finally
             {
@@ -1846,7 +1877,7 @@ namespace DiscountSystem
             public string quantity { get; set; }
             public string type_of_operation { get; set; }
             public string guid { get; set; }
-
+            public string autor { get; set; }
         }
 
         public class DeletedItems : IDisposable
@@ -1863,6 +1894,37 @@ namespace DiscountSystem
             }
         }
 
+        private string insert_deleted_items(string query,string scheme)
+        {
+            string result = "-1";
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
+            SqlTransaction tran = null;
+            try
+            {
+                conn.Open();
+                tran = conn.BeginTransaction();
+                SqlCommand command = new SqlCommand(query, conn);
+                command.Transaction = tran;
+                command.ExecuteNonQuery();
+                tran.Commit();
+                command.Dispose();
+                conn.Close();
+                result = "1";
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                if (conn.State == ConnectionState.Open)
+                {
+                    conn.Close();
+                }
+            }
+
+            return result;
+        }
 
 
         [WebMethod]
@@ -1870,6 +1932,8 @@ namespace DiscountSystem
         {
 
             string result = "-1";
+
+            //scheme = "4";
 
             string code_shop = get_id_database(nick_shop, scheme);
             if (code_shop.Trim().Length == 0)
@@ -1904,8 +1968,8 @@ namespace DiscountSystem
                     "    ,tovar" +
                     "    ,quantity" +
                     "    ,type_of_operation" +
-                    "    ,guid)" +
-
+                    "    ,guid" +
+                    "    ,autor)" +
                     "    VALUES ('" +
                          nick_shop + "'," +
                          deletedItem.num_doc + "," +
@@ -1915,41 +1979,17 @@ namespace DiscountSystem
                           deletedItem.tovar + "," +
                           deletedItem.quantity + "," +
                           deletedItem.type_of_operation +",'"+
-                          deletedItem.guid+"');");
+                          deletedItem.guid+"','"+
+                          deletedItem.autor+"');");
             }
-
-            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
-            SqlTransaction tran = null;
-            try
-            {
-                if (sb.ToString().Trim() != "")
-                {
-                    conn.Open();
-                    tran = conn.BeginTransaction();
-                    string query = sb.ToString();
-                    SqlCommand command = new SqlCommand(query, conn);
-                    command.Transaction = tran;
-                    command.ExecuteNonQuery();
-                    tran.Commit();
-                    command.Dispose();
-                    conn.Close();
-                }
-                result = "1";
-            }
-            catch (Exception ex)
-            {
-
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    conn.Close();
-                }
-            }
+            string query = sb.ToString();
+            result = insert_deleted_items(query, scheme);
+            if (result == "1")
+            {                
+                result = insert_deleted_items(query.Replace("deleted_items", "sales_deleted_items"), "4");
+            }           
 
             return result;
-
 
         }
             
