@@ -1878,6 +1878,7 @@ namespace DiscountSystem
             public string type_of_operation { get; set; }
             public string guid { get; set; }
             public string autor { get; set; }
+            public string reason { get; set; }
         }
 
         public class DeletedItems : IDisposable
@@ -1969,7 +1970,8 @@ namespace DiscountSystem
                     "    ,quantity" +
                     "    ,type_of_operation" +
                     "    ,guid" +
-                    "    ,autor)" +
+                    "    ,autor"+
+                    "    ,reason)" +
                     "    VALUES ('" +
                          nick_shop + "'," +
                          deletedItem.num_doc + "," +
@@ -1980,7 +1982,8 @@ namespace DiscountSystem
                           deletedItem.quantity + "," +
                           deletedItem.type_of_operation +",'"+
                           deletedItem.guid+"','"+
-                          deletedItem.autor+"');");
+                          deletedItem.autor+"','"+
+                          deletedItem.reason+"');");
             }
             string query = sb.ToString();
             result = insert_deleted_items(query, scheme);
@@ -2562,6 +2565,7 @@ namespace DiscountSystem
 
                     //query = "SELECT code,code_tovar,rating,is_active  FROM certificate";
                     query = " SELECT code,code_tovar,rating,is_active FROM certificate WHERE network_ID in(SELECT network_ID FROM shops where code='" + nick_shop + "')";
+                    //query = " SELECT code,code_tovar,rating,is_active FROM certificate WHERE network_ID exists(SELECT network_ID FROM shops where code='" + nick_shop + "')";
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
@@ -2683,6 +2687,7 @@ namespace DiscountSystem
                     }
                 }                
             }
+            int seconds = (DateTime.Now - dt_start).Seconds;
             return result;
         }
         
@@ -3366,7 +3371,8 @@ namespace DiscountSystem
                 {
                     if (scheme != "4")
                     {
-                        bool result2 = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
+                        //bool result2 = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
+                        result = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
                     }
                 }
                 //DateTime dt_finish = DateTime.Now;
