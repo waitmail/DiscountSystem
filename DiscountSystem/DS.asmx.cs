@@ -259,7 +259,9 @@ namespace DiscountSystem
                 //string query = " SELECT code,name,rights,shop,password_m,password_b  FROM users WHERE shop='" + nick_shop +"' OR shop=''";
                 //string query = " SELECT users.code,users.name,users.rights,users_shops.shop,users.password_m,users.password_b,users.INN FROM users LEFT JOIN users_shops ON " +
                 //    "   users.code=users_shops.code WHERE users_shops.shop='" + nick_shop + "'  OR users_shops.shop=''";
-                string query = " SELECT users.user_id,users.name,users.rights,users_shops.shop,users.password_m,users.password_b FROM users  " +
+                //string query = " SELECT users.user_id,users.name,users.rights,users_shops.shop,users.password_m,users.password_b FROM users  " +
+                //               " LEFT JOIN users_shops ON users.user_id = users_shops.user_id WHERE users_shops.shop = '" + nick_shop + "'  OR users_shops.shop = ''";
+                string query = " SELECT users.user_id,users.name,users_shops.rights,users_shops.shop,users.password_m,users.password_b FROM users  " +
                                " LEFT JOIN users_shops ON users.user_id = users_shops.user_id WHERE users_shops.shop = '" + nick_shop + "'  OR users_shops.shop = ''";
 
                 SqlCommand command = new SqlCommand(query, conn);
