@@ -2335,7 +2335,7 @@ namespace DiscountSystem
             SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             using (LoadPacketData loadPacketData = new LoadPacketData())
             {
-                if (Convert.ToDouble(queryPacketData.Version) < 10887422571)
+                if (Convert.ToDouble(queryPacketData.Version) < 10895022321)
                 {
                     loadPacketData.Exception=" У вас устаревшая версия программы. Перезапустите программу для её обновления. ";
                 }
@@ -2672,14 +2672,14 @@ namespace DiscountSystem
                     //return "-1"; здесь ничего не делаем 
                     //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
                     insert_errors_GetDataForCasheV8Jason(nick_shop, "1", ex.Message,scheme);
-                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + "\r\n");
+                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + " " + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "\r\n");
                 }
                 catch (Exception ex)
                 {
                     //return "-1"; здесь ничего не делаем 
                     //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
-                    insert_errors_GetDataForCasheV8Jason(nick_shop, "2", ex.Message,scheme);
-                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + "\r\n");
+                    insert_errors_GetDataForCasheV8Jason(nick_shop, "2", ex.Message+" "+DateTime.Now.ToString(),scheme);
+                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + " "+DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") +"\r\n");
                 }
                 finally
                 {
@@ -3218,7 +3218,7 @@ namespace DiscountSystem
             
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             SalesPortions salesPortions = JsonConvert.DeserializeObject <SalesPortions>(decrypt_data);
-            if (Convert.ToDouble(salesPortions.Version) < 10873126877)
+            if (Convert.ToDouble(salesPortions.Version) < 10895022321)
             {
                 return result;
             }                
@@ -3391,8 +3391,8 @@ namespace DiscountSystem
                                                sph.Sum_terminal1 + "," +
                                                sph.Sum_certificate1 + ",'" +
                                                sph.Guid + "'," +
-                                               sph.SBP + ","+
-                                               sph.ClientPhone + ")";
+                                               sph.SBP + ",'"+
+                                               sph.ClientPhone + "');";
                     query_insert_data_on_sales4.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
