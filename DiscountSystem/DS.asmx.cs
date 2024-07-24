@@ -219,7 +219,7 @@ namespace DiscountSystem
         [WebMethod]
         public string GetUsers(string nick_shop, string data, string scheme)
         {
-            string result = "";
+            string result = "";            
 
             //SqlConnection conn = null;
             //conn = new SqlConnection(getConnectionString());
@@ -925,6 +925,7 @@ namespace DiscountSystem
         public string ExistsUpdateProrgam(string nick_shop, string data, string scheme)
         {
             string result = "";
+            scheme = "4";
 
             //nick_shop = "11109";
             //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
@@ -1009,6 +1010,7 @@ namespace DiscountSystem
         [WebMethod]
         public byte[] GetUpdateProgram(string nick_shop, string data, string scheme)
         {
+            scheme = "4";
             byte[] result = new byte[0];
 
             string code_shop = get_id_database(nick_shop, scheme);
