@@ -1940,7 +1940,8 @@ namespace DiscountSystem
 
             //scheme = "4";
 
-            string code_shop = get_id_database(nick_shop, scheme);
+            //string code_shop = get_id_database(nick_shop, scheme);
+            string code_shop = get_id_database(nick_shop, "4");
             if (code_shop.Trim().Length == 0)
             {
                 return result;
@@ -3207,7 +3208,8 @@ namespace DiscountSystem
             sum_table.ColumnName = "sum_table";
             dt.Columns.Add(sum_table);
 
-            string code_shop = get_id_database(nick_shop, scheme);
+            //string code_shop = get_id_database(nick_shop, scheme);
+            string code_shop = get_id_database(nick_shop, "4");
             if (code_shop.Trim().Length == 0)
             {
                 return result;
@@ -3277,7 +3279,7 @@ namespace DiscountSystem
                                                 "clientInfo_vatin,"+
                                                 "clientInfo_name,"+
                                                 "sum_cash_remainder,"+
-                                                //"num_order,"+
+                                                "num_order,"+
                                                 //"VizaD,"+
                                                 "sno,"+
                                                 "sum_cash1,"+
@@ -3311,8 +3313,8 @@ namespace DiscountSystem
                                                 sph.Id_transaction_sale+"','"+
                                                 sph.ClientInfo_vatin+"','"+
                                                 sph.ClientInfo_name+"',"+
-                                                sph.SumCashRemainder+","+
-                                                //sph.NumOrder+","+
+                                                sph.SumCashRemainder+",'"+
+                                                sph.NumOrder+"',"+
                                                 //sph.VizaD+","+
                                                 sph.SystemTaxation+","+
                                                 sph.Sum_cash1+","+
@@ -3350,7 +3352,7 @@ namespace DiscountSystem
                                                "clientInfo_vatin," +
                                                "clientInfo_name," +
                                                "sum_cash_remainder," +
-                                               //"num_order,"+
+                                               "sales_receipt,"+
                                                //"VizaD,"+
                                                "sno," +
                                                "sum_cash1," +
@@ -3385,8 +3387,8 @@ namespace DiscountSystem
                                                sph.Id_transaction_sale + "','" +
                                                sph.ClientInfo_vatin + "','" +
                                                sph.ClientInfo_name + "'," +
-                                               sph.SumCashRemainder + "," +
-                                               //sph.NumOrder+","+
+                                               sph.SumCashRemainder + ",'" +
+                                               sph.NumOrder+"',"+
                                                //sph.VizaD+","+
                                                sph.SystemTaxation + "," +
                                                sph.Sum_cash1 + "," +
