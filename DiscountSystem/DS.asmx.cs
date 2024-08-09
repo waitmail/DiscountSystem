@@ -3448,25 +3448,41 @@ namespace DiscountSystem
                                             spt.Promotion_b_mover+",'"+
                                             spt.MarkingCode+"','"+
                                             spt.Guid+"')";
-                    query_insert_data_on_sales.Append(s);
-                    query_insert_data_on_sales4.Append(s);
+                    //if (nick_shop != "A01")
+                    //{
+                        query_insert_data_on_sales.Append(s);
+                        query_insert_data_on_sales4.Append(s);
+                    //}
+                    //else
+                    //{
+
+                    //}
                 }
                 //DateTime dt_start = DateTime.Now;
-                result = execute_insert_query(query_insert_data_on_sales.ToString(), 2, scheme);
-                if (result)
+                if (nick_shop != "A01")
                 {
-                    if (scheme != "4")
+                    result = execute_insert_query(query_insert_data_on_sales.ToString(), 2, scheme);
+                    if (result)
                     {
-                        //bool result2 = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
-                        result = execute_insert_query(query_insert_data_on_sales4.ToString(),2, "4");
+                        if (scheme != "4")
+                        {
+                            //bool result2 = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
+                            result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
+                        }
                     }
+                    check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, "4", dt);
                 }
+                else
+                {
+                    result = true;
+                }
+
                 //DateTime dt_finish = DateTime.Now;
                 //string query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
                 //    "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";
                 //execute_insert_query(query, 2);
                 //check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, scheme,dt);
-                check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, "4", dt);
+                
             }
 
             return result;
