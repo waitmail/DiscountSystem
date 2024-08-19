@@ -2338,7 +2338,7 @@ namespace DiscountSystem
             SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             using (LoadPacketData loadPacketData = new LoadPacketData())
             {
-                if (Convert.ToDouble(queryPacketData.Version) < 10895022321)
+                if (Convert.ToDouble(queryPacketData.Version) < 10899431063)
                 {
                     loadPacketData.Exception=" У вас устаревшая версия программы. Перезапустите программу для её обновления. ";
                 }
@@ -2708,6 +2708,10 @@ namespace DiscountSystem
                                                  shop+"',"+
                                                  num_cash+",'"+
                                                  info+"')";
+                if (scheme == "4")
+                {
+                    query = query.Replace("logs", "local_logs");
+                }
                 SqlCommand command = new SqlCommand(query, conn);
                 command.ExecuteNonQuery();
                 conn.Close();
@@ -3222,7 +3226,7 @@ namespace DiscountSystem
             
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             SalesPortions salesPortions = JsonConvert.DeserializeObject <SalesPortions>(decrypt_data);
-            if (Convert.ToDouble(salesPortions.Version) < 10895022321)
+            if (Convert.ToDouble(salesPortions.Version) < 10899431063)
             {
                 return result;
             }                
@@ -3328,7 +3332,7 @@ namespace DiscountSystem
                     s = "INSERT INTO sales_header(shop," +
                                                " num_doc," +
                                                "num_cash," +
-                                               "client," +
+                                               "card_number," +
                                                "bonus_counted," +
                                                "discount," +
                                                "sum," +
@@ -3388,7 +3392,7 @@ namespace DiscountSystem
                                                sph.ClientInfo_vatin + "','" +
                                                sph.ClientInfo_name + "'," +
                                                sph.SumCashRemainder + ",'" +
-                                               sph.NumOrder+"',"+
+                                               sph.NumOrder4+"',"+
                                                //sph.VizaD+","+
                                                sph.SystemTaxation + "," +
                                                sph.Sum_cash1 + "," +
@@ -3527,6 +3531,7 @@ namespace DiscountSystem
             public string ClientInfo_name { get; set; }
             public string SumCashRemainder { get; set; }
             public string NumOrder { get; set; }
+            public string NumOrder4 { get; set; }
             public string VizaD { get; set; }
             public string SystemTaxation { get; set; }
             public string Guid { get; set; }
