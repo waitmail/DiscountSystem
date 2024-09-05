@@ -2311,7 +2311,7 @@ namespace DiscountSystem
         [WebMethod]
         public Byte[] GetDataForCasheV8Jason(string nick_shop, string data,string scheme)
         {
-            DateTime dt_start = DateTime.Now;
+            //DateTime dt_start = DateTime.Now;
             //string result = "-1";
             scheme = "4";
             Byte[] result = Encoding.UTF8.GetBytes("-1");
@@ -2665,10 +2665,10 @@ namespace DiscountSystem
                     string jason_encrypt = CryptorEngine.Encrypt(jason, true, key);                    
                     result = CompressString(jason_encrypt);
                     
-                    DateTime dt_finish = DateTime.Now;                    
-                    query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
-                        "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";                    
-                    execute_insert_query(query, 2,scheme);                    
+                    //DateTime dt_finish = DateTime.Now;                    
+                    //query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
+                    //    "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";                    
+                    //execute_insert_query(query, 2,scheme);                    
                 }
                 catch (SqlException ex)
                 {
@@ -2692,7 +2692,7 @@ namespace DiscountSystem
                     }
                 }                
             }
-            int seconds = (DateTime.Now - dt_start).Seconds;
+            //int seconds = (DateTime.Now - dt_start).Seconds;
             return result;
         }
         
