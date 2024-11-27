@@ -3185,6 +3185,74 @@ namespace DiscountSystem
             return result;
         }
 
+
+        public class CdnLogs
+        {
+            public List<CdnLog> ListCdnLog { get; set; }
+        }
+
+        public class CdnLog
+        {
+            //public string Shop { get; set; }
+            public string NumCash { get; set; }
+            public string CdnAnswer { get; set; }
+            public string DateShop { get; set; }
+            public string NumDoc { get; set; }
+            public string Mark { get; set; }
+        }
+        
+        [WebMethod]
+        public bool UploadCDNLogsPortionJason(string nick_shop, string data, string scheme)
+        {
+            bool result = false;
+
+            string code_shop = get_id_database(nick_shop, "4");
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();            
+            StringBuilder insert_data_cdn = new StringBuilder();            
+
+            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+            CdnLogs logs = JsonConvert.DeserializeObject<CdnLogs>(decrypt_data);
+
+            string s = "";
+
+            foreach (CdnLog log in logs.ListCdnLog)
+            {
+                s = " DELETE FROM cdn_logs WHERE shop='"+nick_shop+
+                    "' AND num_cash=" +log.NumCash+ 
+                    " AND num_doc="+log.NumDoc+
+                    " AND date_shop='"+log.DateShop+"';";
+                insert_data_cdn.Append(s);
+                s = "INSERT INTO cdn_logs" +
+                    "(shop" +
+                    ",num_cash" +
+                    ",num_doc" +
+                    ",date_shop" +
+                    ",date_insert" +
+                    ",mark" +
+                    ",cdn_answer)" +
+                    " VALUES ('" + nick_shop + "'" +
+                    "," + log.NumCash +
+                    "," + log.NumDoc +
+                    ",'" + log.DateShop + "'" +
+                    ",'" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'" +
+                    ",'" + log.Mark + "'" +
+                    ",'" + log.CdnAnswer + "');";
+                insert_data_cdn.Append(s);
+            }
+
+            result = execute_insert_query(insert_data_cdn.ToString(), 2, "4");
+
+            return result;
+        }
+               
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -3538,6 +3606,7 @@ namespace DiscountSystem
             public string SBP { get; set; }
             public string ClientPhone { get; set; }
         }
+
         public class SalesPortionsTable
         {
             public string Shop { get; set; }
