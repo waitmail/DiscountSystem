@@ -40,30 +40,30 @@ namespace DiscountSystem
             return true;
         }
 
-        private void check_sum_header_and_table(string shop,string num_cash,string scheme, DataTable dt)
-        {
-            // Фильтрация строк и подсчет суммы
-            var filteredData = from row in dt.AsEnumerable()
-                               group row by row.Field<string>("guid") into grp
-                               let total_sum_header = grp.Sum(r => r.Field<double>("sum_header"))
-                               let total_sum_table = grp.Sum(r => r.Field<double>("sum_table"))
-                               where total_sum_header != total_sum_table
-                               select new
-                               {
-                                   guid = grp.Key,
-                                   TotalSumHeader = total_sum_header,
-                                   TotalSumTable = total_sum_table
-                               };
-            if (filteredData != null && filteredData.Any())
-            {                
-                foreach (var item in filteredData)
-                {
-                    //MainStaticClass.write_event_in_log("guid: " + item.guid + " Сумма по шапке: " + item.TotalSumHeader + " Сумма по строкам: " + item.TotalSumTable, "Отправка чеков", "0");
-                    string info = "guid: " + item.guid + " Сумма по шапке: " + item.TotalSumHeader + " Сумма по строкам: " + item.TotalSumTable;
-                    insert_errors_GetDataForCasheV8Jason(shop, num_cash, info, scheme);
-                }
-            }
-        }
+        //private void check_sum_header_and_table(string shop,string num_cash,string scheme, DataTable dt)
+        //{
+        //    // Фильтрация строк и подсчет суммы
+        //    var filteredData = from row in dt.AsEnumerable()
+        //                       group row by row.Field<string>("guid") into grp
+        //                       let total_sum_header = grp.Sum(r => r.Field<double>("sum_header"))
+        //                       let total_sum_table = grp.Sum(r => r.Field<double>("sum_table"))
+        //                       where total_sum_header != total_sum_table
+        //                       select new
+        //                       {
+        //                           guid = grp.Key,
+        //                           TotalSumHeader = total_sum_header,
+        //                           TotalSumTable = total_sum_table
+        //                       };
+        //    if (filteredData != null && filteredData.Any())
+        //    {                
+        //        foreach (var item in filteredData)
+        //        {
+        //            //MainStaticClass.write_event_in_log("guid: " + item.guid + " Сумма по шапке: " + item.TotalSumHeader + " Сумма по строкам: " + item.TotalSumTable, "Отправка чеков", "0");
+        //            string info = "guid: " + item.guid + " Сумма по шапке: " + item.TotalSumHeader + " Сумма по строкам: " + item.TotalSumTable;
+        //            insert_errors_GetDataForCasheV8Jason(shop, num_cash, info, scheme);
+        //        }
+        //    }
+        //}
 
         [WebMethod]
         public string[] GetTypesCard()
@@ -3199,6 +3199,7 @@ namespace DiscountSystem
             public string DateShop { get; set; }
             public string NumDoc { get; set; }
             public string Mark { get; set; }
+            public string Status { get; set; }
         }
         
         [WebMethod]
@@ -3235,22 +3236,25 @@ namespace DiscountSystem
                     ",date_shop" +
                     ",date_insert" +
                     ",mark" +
-                    ",cdn_answer)" +
+                    ",cdn_answer"+
+                    ",status)" +
                     " VALUES ('" + nick_shop + "'" +
                     "," + log.NumCash +
                     "," + log.NumDoc +
                     ",'" + log.DateShop + "'" +
                     ",'" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'" +
                     ",'" + log.Mark + "'" +
-                    ",'" + log.CdnAnswer + "');";
+                    ",'" + log.CdnAnswer + "'"+
+                    ",'" + log.Status + "');";
                 insert_data_cdn.Append(s);
             }
+            //if(insert_data_cdn.ToString().Length>0)
 
             result = execute_insert_query(insert_data_cdn.ToString(), 2, "4");
 
             return result;
         }
-               
+
 
 
         /// <summary>
@@ -3264,21 +3268,21 @@ namespace DiscountSystem
         {
             bool result = false;
 
-            DataTable dt = new DataTable();
-            DataColumn guid = new DataColumn();
-            guid.DataType = System.Type.GetType("System.String");
-            guid.ColumnName = "guid";
-            dt.Columns.Add(guid);
+            //DataTable dt = new DataTable();
+            //DataColumn guid = new DataColumn();
+            //guid.DataType = System.Type.GetType("System.String");
+            //guid.ColumnName = "guid";
+            //dt.Columns.Add(guid);
 
-            DataColumn sum_header = new DataColumn();
-            sum_header.DataType = System.Type.GetType("System.Double");
-            sum_header.ColumnName = "sum_header";
-            dt.Columns.Add(sum_header);
+            //DataColumn sum_header = new DataColumn();
+            //sum_header.DataType = System.Type.GetType("System.Double");
+            //sum_header.ColumnName = "sum_header";
+            //dt.Columns.Add(sum_header);
 
-            DataColumn sum_table = new DataColumn();
-            sum_table.DataType = System.Type.GetType("System.Double");
-            sum_table.ColumnName = "sum_table";
-            dt.Columns.Add(sum_table);
+            //DataColumn sum_table = new DataColumn();
+            //sum_table.DataType = System.Type.GetType("System.Double");
+            //sum_table.ColumnName = "sum_table";
+            //dt.Columns.Add(sum_table);
 
             //string code_shop = get_id_database(nick_shop, scheme);
             string code_shop = get_id_database(nick_shop, "4");
@@ -3287,115 +3291,115 @@ namespace DiscountSystem
                 return result;
             }
             string count_day = CryptorEngine.get_count_day();
-            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();           
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
             string s = "";
-            StringBuilder query_insert_data_on_sales = new StringBuilder();
+            //StringBuilder query_insert_data_on_sales = new StringBuilder();
             StringBuilder query_insert_data_on_sales4 = new StringBuilder();
-            
+
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
-            SalesPortions salesPortions = JsonConvert.DeserializeObject <SalesPortions>(decrypt_data);
+            SalesPortions salesPortions = JsonConvert.DeserializeObject<SalesPortions>(decrypt_data);
             if (Convert.ToDouble(salesPortions.Version) < 10899431063)
             {
                 return result;
-            }                
+            }
 
             if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop.Trim()))
             {
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
                 {
                     s = "DELETE FROM sales_table WHERE guid='" + sph.Guid + "';";
-                    query_insert_data_on_sales.Append(s);
+                    //query_insert_data_on_sales.Append(s);
                     query_insert_data_on_sales4.Append(s);
                     s = "DELETE FROM sales_header WHERE guid='" + sph.Guid + "';";
-                    query_insert_data_on_sales.Append(s);
+                    //query_insert_data_on_sales.Append(s);
                     query_insert_data_on_sales4.Append(s);
-                }              
+                }
 
                 StringBuilder sb = new StringBuilder();
                 //Соберем запрос из шапок документов
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
                 {
                     ////////////////////////////////////////////////////////////////////////
-                    DataRow row = dt.NewRow();
-                    row["guid"] = sph.Guid;
-                    row["sum_header"] = Convert.ToDouble(sph.Sum_cash.Replace(".", ",")) +
-                        Convert.ToDouble(sph.Sum_terminal.Replace(".", ",")) +
-                        Convert.ToDouble(sph.Sum_certificate.Replace(".", ","));
-                    row["sum_table"] = 0;
-                    dt.Rows.Add(row);
+                    //DataRow row = dt.NewRow();
+                    //row["guid"] = sph.Guid;
+                    //row["sum_header"] = Convert.ToDouble(sph.Sum_cash.Replace(".", ",")) +
+                    //    Convert.ToDouble(sph.Sum_terminal.Replace(".", ",")) +
+                    //    Convert.ToDouble(sph.Sum_certificate.Replace(".", ","));
+                    //row["sum_table"] = 0;
+                    //dt.Rows.Add(row);
                     ////////////////////////////////////////////////////////////////////////
-                    s = "INSERT INTO sales_header(shop," +
-                                                " num_doc," +
-                                                "num_cash," +
-                                                "client," +
-                                                "bonus_counted," +
-                                                "discount," +
-                                                "sum," +
-                                                "check_type," +
-                                                "have_action," +
-                                                "date_time_start," +
-                                                "date_time_write," +
-                                                "its_deleted," +
-                                                "bonus_writen_off," +
-                                                //"action," +
-                                                "sum_cash," +
-                                                "sum_terminal," +
-                                                "sum_certificate," +
-                                                //"sales_assistant," +
-                                                "autor," +
-                                                "comment," +
-                                                "version," +
-                                                "its_print,"+
-                                                "transactionId," +
-                                                "transactionIdSales," +
-                                                "clientInfo_vatin,"+
-                                                "clientInfo_name,"+
-                                                "sum_cash_remainder,"+
-                                                "num_order,"+
-                                                //"VizaD,"+
-                                                "sno,"+
-                                                "sum_cash1,"+
-                                                "sum_terminal1," +
-                                                "sum_certificate1," +
-                                                "guid,"+
-                                                "sbp)" +
-                                                " VALUES('" + sph.Shop + "'," +
-                                                sph.Num_doc + "," +
-                                                sph.Num_cash + ",'" +
-                                                sph.Client + "'," +
-                                                sph.Bonus_counted + "," +
-                                                sph.Discount + "," +
-                                                sph.Sum + "," +
-                                                sph.Check_type + ",'" +
-                                                sph.Have_action + "','" +
-                                                sph.Date_time_start + "','" +
-                                                sph.Date_time_write + "'," +
-                                                sph.Its_deleted + "," +
-                                                sph.Bonus_writen_off + "," +
-                                                //sph.Action + "," +
-                                                sph.Sum_cash + "," +
-                                                sph.Sum_terminal + "," +
-                                                sph.Sum_certificate + ",'" +
-                                                //sph.Sales_assistant + "'," +
-                                                sph.Autor + "','" +
-                                                sph.Comment + "',"+
-                                                salesPortions.Version+","+
-                                                sph.Its_print+",'"+
-                                                sph.Id_transaction+"','"+
-                                                sph.Id_transaction_sale+"','"+
-                                                sph.ClientInfo_vatin+"','"+
-                                                sph.ClientInfo_name+"',"+
-                                                sph.SumCashRemainder+",'"+
-                                                sph.NumOrder+"',"+
-                                                //sph.VizaD+","+
-                                                sph.SystemTaxation+","+
-                                                sph.Sum_cash1+","+
-                                                sph.Sum_terminal1+","+
-                                                sph.Sum_certificate1+",'"+
-                                                sph.Guid+"',"+
-                                                sph.SBP+")";
+                    //s = "INSERT INTO sales_header(shop," +
+                    //                            " num_doc," +
+                    //                            "num_cash," +
+                    //                            "client," +
+                    //                            "bonus_counted," +
+                    //                            "discount," +
+                    //                            "sum," +
+                    //                            "check_type," +
+                    //                            "have_action," +
+                    //                            "date_time_start," +
+                    //                            "date_time_write," +
+                    //                            "its_deleted," +
+                    //                            "bonus_writen_off," +
+                    //                            //"action," +
+                    //                            "sum_cash," +
+                    //                            "sum_terminal," +
+                    //                            "sum_certificate," +
+                    //                            //"sales_assistant," +
+                    //                            "autor," +
+                    //                            "comment," +
+                    //                            "version," +
+                    //                            "its_print,"+
+                    //                            "transactionId," +
+                    //                            "transactionIdSales," +
+                    //                            "clientInfo_vatin,"+
+                    //                            "clientInfo_name,"+
+                    //                            "sum_cash_remainder,"+
+                    //                            "num_order,"+
+                    //                            //"VizaD,"+
+                    //                            "sno,"+
+                    //                            "sum_cash1,"+
+                    //                            "sum_terminal1," +
+                    //                            "sum_certificate1," +
+                    //                            "guid,"+
+                    //                            "sbp)" +
+                    //                            " VALUES('" + sph.Shop + "'," +
+                    //                            sph.Num_doc + "," +
+                    //                            sph.Num_cash + ",'" +
+                    //                            sph.Client + "'," +
+                    //                            sph.Bonus_counted + "," +
+                    //                            sph.Discount + "," +
+                    //                            sph.Sum + "," +
+                    //                            sph.Check_type + ",'" +
+                    //                            sph.Have_action + "','" +
+                    //                            sph.Date_time_start + "','" +
+                    //                            sph.Date_time_write + "'," +
+                    //                            sph.Its_deleted + "," +
+                    //                            sph.Bonus_writen_off + "," +
+                    //                            //sph.Action + "," +
+                    //                            sph.Sum_cash + "," +
+                    //                            sph.Sum_terminal + "," +
+                    //                            sph.Sum_certificate + ",'" +
+                    //                            //sph.Sales_assistant + "'," +
+                    //                            sph.Autor + "','" +
+                    //                            sph.Comment + "',"+
+                    //                            salesPortions.Version+","+
+                    //                            sph.Its_print+",'"+
+                    //                            sph.Id_transaction+"','"+
+                    //                            sph.Id_transaction_sale+"','"+
+                    //                            sph.ClientInfo_vatin+"','"+
+                    //                            sph.ClientInfo_name+"',"+
+                    //                            sph.SumCashRemainder+",'"+
+                    //                            sph.NumOrder+"',"+
+                    //                            //sph.VizaD+","+
+                    //                            sph.SystemTaxation+","+
+                    //                            sph.Sum_cash1+","+
+                    //                            sph.Sum_terminal1+","+
+                    //                            sph.Sum_certificate1+",'"+
+                    //                            sph.Guid+"',"+
+                    //                            sph.SBP+")";
 
-                    query_insert_data_on_sales.Append(s);
+                    //query_insert_data_on_sales.Append(s);
 
                     s = "INSERT INTO sales_header(shop," +
                                                " num_doc," +
@@ -3424,14 +3428,14 @@ namespace DiscountSystem
                                                "clientInfo_vatin," +
                                                "clientInfo_name," +
                                                "sum_cash_remainder," +
-                                               "sales_receipt,"+
+                                               "sales_receipt," +
                                                //"VizaD,"+
                                                "sno," +
                                                "sum_cash1," +
                                                "sum_terminal1," +
                                                "sum_certificate1," +
                                                "guid," +
-                                               "sbp,"+
+                                               "sbp," +
                                                "card_id)" +
                                                " VALUES('" + sph.Shop + "'," +
                                                sph.Num_doc + "," +
@@ -3460,70 +3464,70 @@ namespace DiscountSystem
                                                sph.ClientInfo_vatin + "','" +
                                                sph.ClientInfo_name + "'," +
                                                sph.SumCashRemainder + ",'" +
-                                               sph.NumOrder4+"',"+
+                                               sph.NumOrder4 + "'," +
                                                //sph.VizaD+","+
                                                sph.SystemTaxation + "," +
                                                sph.Sum_cash1 + "," +
                                                sph.Sum_terminal1 + "," +
                                                sph.Sum_certificate1 + ",'" +
                                                sph.Guid + "'," +
-                                               sph.SBP + ",'"+
+                                               sph.SBP + ",'" +
                                                sph.ClientPhone + "');";
                     query_insert_data_on_sales4.Append(s);
                 }
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
                 {
                     /////////////////////////////////////////////////////////////////////////////
-                    DataRow row = dt.NewRow();
-                    row["guid"] = spt.Guid;
-                    row["sum_header"] = 0;
-                    row["sum_table"] = Convert.ToDouble(spt.Sum_d.Replace(".", ","));
-                    dt.Rows.Add(row);
+                    //DataRow row = dt.NewRow();
+                    //row["guid"] = spt.Guid;
+                    //row["sum_header"] = 0;
+                    //row["sum_table"] = Convert.ToDouble(spt.Sum_d.Replace(".", ","));
+                    //dt.Rows.Add(row);
                     //////////////////////////////////////////////////////////////////////////////
-                    s = "INSERT INTO sales_table(shop,"+
-                                                    "num_doc,"+
-                                                    "num_cash,"+
-                                                    "tovar,"+
-                                                    "quantity,"+
+                    s = "INSERT INTO sales_table(shop," +
+                                                    "num_doc," +
+                                                    "num_cash," +
+                                                    "tovar," +
+                                                    "quantity," +
                                                     "price," +
-                                                    " price_d,"+
-                                                    "sum,"+
-                                                    "sum_d,"+
-                                                    "action1,"+
-                                                    "action2,"+
-                                                    "action3,"+
+                                                    " price_d," +
+                                                    "sum," +
+                                                    "sum_d," +
+                                                    "action1," +
+                                                    "action2," +
+                                                    "action3," +
                                                     //"characteristic,"+
-                                                    "date_time_write,"+
-                                                    "num_str,"+
-                                                    "bonus_stand,"+
-                                                    "bonus_prom,"+
-                                                    "promotion_b_mover,"+
-                                                    "marking_code,"+
+                                                    "date_time_write," +
+                                                    "num_str," +
+                                                    "bonus_stand," +
+                                                    "bonus_prom," +
+                                                    "promotion_b_mover," +
+                                                    "marking_code," +
                                                     "guid)" +
-                                            "VALUES('"+spt.Shop+"',"+
-                                            spt.Num_doc+","+
-                                            spt.Num_cash+","+
-                                            spt.Tovar+","+
-                                            spt.Quantity+","+
-                                            spt.Price+","+
-                                            spt.Price_d+","+
-                                            spt.Sum+","+
-                                            spt.Sum_d+","+
-                                            spt.Action1+","+
-                                            spt.Action2+","+
-                                            spt.Action3+",'"+
+                                            "VALUES('" + spt.Shop + "'," +
+                                            spt.Num_doc + "," +
+                                            spt.Num_cash + "," +
+                                            spt.Tovar + "," +
+                                            spt.Quantity + "," +
+                                            spt.Price + "," +
+                                            spt.Price_d + "," +
+                                            spt.Sum + "," +
+                                            spt.Sum_d + "," +
+                                            spt.Action1 + "," +
+                                            spt.Action2 + "," +
+                                            spt.Action3 + ",'" +
                                             //spt.Characteristic+"','"+
-                                            spt.Date_time_write+"',"+
-                                            spt.Num_str+","+
-                                            spt.Bonus_stand+","+
-                                            spt.Bonus_prom+","+
-                                            spt.Promotion_b_mover+",'"+
-                                            spt.MarkingCode+"','"+
-                                            spt.Guid+"')";
+                                            spt.Date_time_write + "'," +
+                                            spt.Num_str + "," +
+                                            spt.Bonus_stand + "," +
+                                            spt.Bonus_prom + "," +
+                                            spt.Promotion_b_mover + ",'" +
+                                            spt.MarkingCode + "','" +
+                                            spt.Guid + "')";
                     //if (nick_shop != "A01")
                     //{
-                        query_insert_data_on_sales.Append(s);
-                        query_insert_data_on_sales4.Append(s);
+                    //query_insert_data_on_sales.Append(s);
+                    query_insert_data_on_sales4.Append(s);
                     //}
                     //else
                     //{
@@ -3531,34 +3535,35 @@ namespace DiscountSystem
                     //}
                 }
                 //DateTime dt_start = DateTime.Now;
-                if (nick_shop != "A01")
-                {
-                    result = execute_insert_query(query_insert_data_on_sales.ToString(), 2, scheme);
-                    if (result)
-                    {
-                        if (scheme != "4")
-                        {
-                            //bool result2 = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
-                            result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
-                        }
-                    }
-                    check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, "4", dt);
-                }
-                else
-                {
-                    result = true;
-                }
+                //if (nick_shop != "A01")
+                //{
+                //result = execute_insert_query(query_insert_data_on_sales.ToString(), 2, scheme);
+                //if (result)
+                //{
+                //if (scheme != "4")
+                //{
+                //bool result2 = execute_insert_query(query_insert_data_on_sales.ToString(), 2, "4");
+                result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
+                //}
+                //}
+                //check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, "4", dt);
+                //}
+                //else
+                //{
+                //    result = true;
+                //}
 
                 //DateTime dt_finish = DateTime.Now;
                 //string query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
                 //    "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";
                 //execute_insert_query(query, 2);
                 //check_sum_header_and_table(nick_shop, salesPortions.ListSalesPortionsHeader[0].Num_cash, scheme,dt);
-                
+
             }
 
             return result;
         }
+
         public class SalesPortions
         {
             public string Version { get; set; }
