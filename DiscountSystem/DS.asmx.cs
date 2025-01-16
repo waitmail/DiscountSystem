@@ -26,7 +26,9 @@ namespace DiscountSystem
     [WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
     [ToolboxItem(false)]
     public class DS : System.Web.Services.WebService
-    {       
+    {
+
+        private Int64 last_version_cash_program = 10911831760;
 
         [WebMethod]
         public string HelloWorld()
@@ -2338,7 +2340,7 @@ namespace DiscountSystem
             SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
             using (LoadPacketData loadPacketData = new LoadPacketData())
             {
-                if (Convert.ToDouble(queryPacketData.Version) < 10899431063)
+                if (Convert.ToDouble(queryPacketData.Version) < last_version_cash_program)
                 {
                     loadPacketData.Exception=" У вас устаревшая версия программы. Перезапустите программу для её обновления. ";
                 }
@@ -2717,7 +2719,7 @@ namespace DiscountSystem
                 conn.Close();
                 command.Dispose();
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 
             }
@@ -3278,7 +3280,7 @@ namespace DiscountSystem
 
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             SalesPortions salesPortions = JsonConvert.DeserializeObject<SalesPortions>(decrypt_data);
-            if (Convert.ToDouble(salesPortions.Version) < 10899431063)
+            if (Convert.ToDouble(salesPortions.Version) < last_version_cash_program)
             {
                 return result;
             }
