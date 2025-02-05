@@ -3255,7 +3255,102 @@ namespace DiscountSystem
 
             return result;
         }
-               
+
+
+
+        public class RecordsErrorLog
+        {
+            public string Shop { get; set; }
+            public short CashDeskNumber { get; set; }
+            public List<RecordErrorLog> ErrorLogs { get; set; } = new List<RecordErrorLog>();
+        }
+
+        public class RecordErrorLog
+        {
+            public string ErrorMessage { get; set; }
+            public string MethodName { get; set; }
+            public long NumDoc { get; set; }
+            public string Description { get; set; }
+            public DateTime DateTimeRecord { get; set; }
+        }
+
+
+
+        [WebMethod]
+        public bool UploadErrorLogPortionJson(string nick_shop, string data, string scheme)
+        {
+            bool result = false;
+            scheme = "4";
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (string.IsNullOrWhiteSpace(code_shop))
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+
+            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+
+            RecordsErrorLog recordsErrorLog = JsonConvert.DeserializeObject<RecordsErrorLog>(decrypt_data);
+
+            if (recordsErrorLog?.ErrorLogs == null || recordsErrorLog.ErrorLogs.Count == 0)
+            {
+                return result;
+            }
+
+            using (SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme))))
+            {
+                conn.Open();
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (RecordErrorLog recordErrorLog in recordsErrorLog.ErrorLogs)
+                        {
+                            // Удаление записи
+                            string deleteQuery = "DELETE FROM errors_log WHERE shop=@Shop AND date_time_record=@DateTimeRecord AND cash_desk_number=@CashDeskNumber";
+                            using (SqlCommand deleteCommand = new SqlCommand(deleteQuery, conn, transaction))
+                            {
+                                deleteCommand.Parameters.AddWithValue("@Shop", recordsErrorLog.Shop);                                
+                                deleteCommand.Parameters.AddWithValue("@DateTimeRecord", recordErrorLog.DateTimeRecord);
+                                deleteCommand.Parameters.AddWithValue("@CashDeskNumber", recordsErrorLog.CashDeskNumber);
+                                deleteCommand.ExecuteNonQuery();
+                            }
+
+                            // Вставка новой записи
+                            string insertQuery = "INSERT INTO errors_log (error_message, num_doc, cash_desk_number, shop, method_name, description,date_time_record) " +
+                                                 "VALUES (@ErrorMessage, @NumDoc, @CashDeskNumber, @Shop, @MethodName, @Description,@DateTimeRecord)";
+                            using (SqlCommand insertCommand = new SqlCommand(insertQuery, conn, transaction))
+                            {
+                                insertCommand.Parameters.AddWithValue("@ErrorMessage", recordErrorLog.ErrorMessage);
+                                insertCommand.Parameters.AddWithValue("@NumDoc", recordErrorLog.NumDoc);
+                                insertCommand.Parameters.AddWithValue("@CashDeskNumber", recordsErrorLog.CashDeskNumber);
+                                insertCommand.Parameters.AddWithValue("@Shop", recordsErrorLog.Shop);
+                                insertCommand.Parameters.AddWithValue("@MethodName", recordErrorLog.MethodName);
+                                insertCommand.Parameters.AddWithValue("@Description", recordErrorLog.Description);
+                                insertCommand.Parameters.AddWithValue("@DateTimeRecord", recordErrorLog.DateTimeRecord);                                
+                                insertCommand.ExecuteNonQuery();
+                            }
+                        }
+
+                        transaction.Commit();
+                        result = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Логирование ошибки
+                        // logger.Error("Ошибка при загрузке логов", ex);
+                        transaction.Rollback();
+                        // Можно выбросить исключение или вернуть false
+                    }
+                }
+            }
+
+            return result;
+        }
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -3263,7 +3358,7 @@ namespace DiscountSystem
         /// <param name="data"></param>
         /// <returns></returns>
         [WebMethod]
-        public bool UploadDataOnSalesPortionJason(string nick_shop, string data, string scheme)
+        public bool UploadDataOnSalesPortionJson(string nick_shop, string data, string scheme)
         {
             bool result = false;
             
@@ -3413,6 +3508,170 @@ namespace DiscountSystem
                 
                 if (nick_shop != "A01")
                 {                    
+                    result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nick_shop"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        [WebMethod]
+        public bool UploadDataOnSalesPortionJason(string nick_shop, string data, string scheme)
+        {
+            bool result = false;
+
+            //string code_shop = get_id_database(nick_shop, scheme);
+            string code_shop = get_id_database(nick_shop, "4");
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string s = "";
+            StringBuilder query_insert_data_on_sales4 = new StringBuilder();
+
+            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+            SalesPortions salesPortions = JsonConvert.DeserializeObject<SalesPortions>(decrypt_data);
+            if (Convert.ToDouble(salesPortions.Version) < last_version_cash_program)
+            {
+                return result;
+            }
+
+            if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop.Trim()))
+            {
+                foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
+                {
+                    s = "DELETE FROM sales_table WHERE guid='" + sph.Guid + "';";
+                    query_insert_data_on_sales4.Append(s);
+                    s = "DELETE FROM sales_header WHERE guid='" + sph.Guid + "';";
+                    query_insert_data_on_sales4.Append(s);
+                }
+
+                StringBuilder sb = new StringBuilder();
+                //Соберем запрос из шапок документов
+                foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
+                {
+                    s = "INSERT INTO sales_header(shop," +
+                                               " num_doc," +
+                                               "num_cash," +
+                                               "card_number," +
+                                               "bonus_counted," +
+                                               "discount," +
+                                               "sum," +
+                                               "check_type," +
+                                               "have_action," +
+                                               "date_time_start," +
+                                               "date_time_write," +
+                                               "its_deleted," +
+                                               "bonus_writen_off," +
+                                               "sum_cash," +
+                                               "sum_terminal," +
+                                               "sum_certificate," +
+                                               "autor," +
+                                               "comment," +
+                                               "version," +
+                                               "its_print," +
+                                               "transactionId," +
+                                               "transactionIdSales," +
+                                               "clientInfo_vatin," +
+                                               "clientInfo_name," +
+                                               "sum_cash_remainder," +
+                                               "sales_receipt," +
+                                               "sno," +
+                                               "sum_cash1," +
+                                               "sum_terminal1," +
+                                               "sum_certificate1," +
+                                               "guid," +
+                                               "sbp," +
+                                               "card_id)" +
+                                               " VALUES('" + sph.Shop + "'," +
+                                               sph.Num_doc + "," +
+                                               sph.Num_cash + ",'" +
+                                               sph.Client + "'," +
+                                               sph.Bonus_counted + "," +
+                                               sph.Discount + "," +
+                                               sph.Sum + "," +
+                                               sph.Check_type + ",'" +
+                                               sph.Have_action + "','" +
+                                               sph.Date_time_start + "','" +
+                                               sph.Date_time_write + "'," +
+                                               sph.Its_deleted + "," +
+                                               sph.Bonus_writen_off + "," +
+                                               sph.Sum_cash + "," +
+                                               sph.Sum_terminal + "," +
+                                               sph.Sum_certificate + ",'" +
+                                               sph.Autor + "','" +
+                                               sph.Comment + "'," +
+                                               salesPortions.Version + "," +
+                                               sph.Its_print + ",'" +
+                                               sph.Id_transaction + "','" +
+                                               sph.Id_transaction_sale + "','" +
+                                               sph.ClientInfo_vatin + "','" +
+                                               sph.ClientInfo_name + "'," +
+                                               sph.SumCashRemainder + ",'" +
+                                               sph.NumOrder4 + "'," +
+                                               sph.SystemTaxation + "," +
+                                               sph.Sum_cash1 + "," +
+                                               sph.Sum_terminal1 + "," +
+                                               sph.Sum_certificate1 + ",'" +
+                                               sph.Guid + "'," +
+                                               sph.SBP + ",'" +
+                                               sph.ClientPhone + "');";
+                    query_insert_data_on_sales4.Append(s);
+                }
+                foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
+                {
+                    s = "INSERT INTO sales_table(shop," +
+                                                    "num_doc," +
+                                                    "num_cash," +
+                                                    "tovar," +
+                                                    "quantity," +
+                                                    "price," +
+                                                    " price_d," +
+                                                    "sum," +
+                                                    "sum_d," +
+                                                    "action1," +
+                                                    "action2," +
+                                                    "action3," +
+                                                    "date_time_write," +
+                                                    "num_str," +
+                                                    "bonus_stand," +
+                                                    "bonus_prom," +
+                                                    "promotion_b_mover," +
+                                                    "marking_code," +
+                                                    "guid)" +
+                                            "VALUES('" + spt.Shop + "'," +
+                                            spt.Num_doc + "," +
+                                            spt.Num_cash + "," +
+                                            spt.Tovar + "," +
+                                            spt.Quantity + "," +
+                                            spt.Price + "," +
+                                            spt.Price_d + "," +
+                                            spt.Sum + "," +
+                                            spt.Sum_d + "," +
+                                            spt.Action1 + "," +
+                                            spt.Action2 + "," +
+                                            spt.Action3 + ",'" +
+                                            spt.Date_time_write + "'," +
+                                            spt.Num_str + "," +
+                                            spt.Bonus_stand + "," +
+                                            spt.Bonus_prom + "," +
+                                            spt.Promotion_b_mover + ",'" +
+                                            spt.MarkingCode + "','" +
+                                            spt.Guid + "')";
+
+                    query_insert_data_on_sales4.Append(s);
+                }
+
+                if (nick_shop != "A01")
+                {
                     result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
                 }
             }
