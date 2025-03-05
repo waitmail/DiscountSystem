@@ -28,7 +28,7 @@ namespace DiscountSystem
     public class DS : System.Web.Services.WebService
     {
 
-        private Int64 last_version_cash_program = 10911831760;
+        private Int64 last_version_cash_program = 10919516312;
 
         [WebMethod]
         public string HelloWorld()
@@ -1100,6 +1100,37 @@ namespace DiscountSystem
                 {
                     result = File.ReadAllBytes(path_for_distr);
                 }
+            }
+
+            return result;
+        }
+
+
+        [WebMethod]
+        public byte[] GetPDP(string nick_shop, string data, string scheme)
+        {
+            byte[] result = new byte[0];
+            scheme = "4";
+
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+            DateTime lastWriteTime_cash = JsonConvert.DeserializeObject<DateTime>(decrypt_data);            
+            string filePath = "C:\\DistrCashProgram\\Russia\\Cash8.pdb";
+            if (File.Exists(filePath))
+            {
+                FileInfo fileInfo = new FileInfo(filePath);
+                DateTime lastWriteTime = fileInfo.LastWriteTime;
+                if (lastWriteTime > lastWriteTime_cash)
+                {
+                    result = File.ReadAllBytes(filePath);
+                }              
             }
 
             return result;
