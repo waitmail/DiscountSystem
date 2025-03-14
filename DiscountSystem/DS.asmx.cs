@@ -1136,6 +1136,32 @@ namespace DiscountSystem
             return result;
         }
 
+
+        [WebMethod]
+        public byte[] GetFile(string nick_shop, string data, string scheme)
+        {
+            byte[] result = new byte[0];
+            scheme = "4";
+
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+            string filename = JsonConvert.DeserializeObject<string>(decrypt_data);
+            string filePath = "C:\\DistrCashProgram\\Russia\\"+ filename;
+            if (File.Exists(filePath))
+            {                
+                result = File.ReadAllBytes(filePath);             
+            }
+
+            return result;
+        }
+
         [WebMethod]
         public string GetStatusSertificat(string nick_shop, string data, string scheme)
         {
@@ -1847,8 +1873,7 @@ namespace DiscountSystem
             foreach (PhoneClient phonesClient in phonesClients.ListPhoneClient)
             {
                 sb.Append("DELETE FROM cards_phone_number_in WHERE client_code='" + phonesClient.ClientCode + "' AND shop='"+nick_shop+"';");
-                sb.Append("INSERT INTO cards_phone_number_in(client_code,phone_number,shop)VALUES('" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "','" + nick_shop + "');");
-                //sb.Append("DELETE FROM phone_number_log WHERE client_code='" + phonesClient.ClientCode + "';");
+                sb.Append("INSERT INTO cards_phone_number_in(client_code,phone_number,shop)VALUES('" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "','" + nick_shop + "');");                
                 sb.Append("INSERT INTO cards_phone_number_log(shop,client_code,phone_number,date_time)VALUES('" + phonesClients.NickShop + "','" + phonesClient.ClientCode + "','" + phonesClient.NumPhone + "','" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "');");
             }
 
