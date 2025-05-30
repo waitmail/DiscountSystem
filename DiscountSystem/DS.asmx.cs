@@ -2197,6 +2197,8 @@ namespace DiscountSystem
             public string ExecutionOrder { get; set; }
             public string GiftPrice { get; set; }
             public string Kind { get; set; }
+            public string Picture { get; set; }
+
 
 
             void IDisposable.Dispose()
@@ -2517,7 +2519,7 @@ namespace DiscountSystem
                             " mark,disc_only,time_start,time_end " +//" present,mark,disc_only,time_start,time_end " +
                             " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
                             " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
-                            " ,sum_bonus,execution_order,gift_price,kind,sum_2 " +
+                            " ,sum_bonus,execution_order,gift_price,kind,sum_2,picture " +
                             " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
                             " LEFT JOIN action_header ON action_active.num_doc = action_header.num_doc ";
 
@@ -2559,6 +2561,15 @@ namespace DiscountSystem
                             actionHeader.ExecutionOrder = reader["execution_order"].ToString().Trim();
                             actionHeader.GiftPrice = reader["gift_price"].ToString().Replace(",", ".");
                             actionHeader.Kind = reader["kind"].ToString();
+                            //actionHeader.Picture = (reader["picture"].ToString() == "" ? "" : Convert.ToBase64String((byte[])reader["picture"])); 
+                            if (reader["picture"] is byte[] bytes && bytes.Length > 0)
+                            {
+                                actionHeader.Picture = Convert.ToBase64String(bytes);
+                            }
+                            else
+                            {
+                                actionHeader.Picture = "";
+                            }
 
                             loadPacketData.ListActionHeader.Add(actionHeader);
                         }
