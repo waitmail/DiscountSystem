@@ -2542,7 +2542,7 @@ namespace DiscountSystem
                             actionHeader.Persent = reader["persent"].ToString().Replace(",", ".");
                             actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
                             actionHeader.sum1 = reader["sum_2"].ToString().Replace(",", ".");
-                            actionHeader.Comment = reader["comment"].ToString().Trim();
+                            actionHeader.Comment = reader["comment"].ToString().Trim().Replace("'", "");
                             actionHeader.Marker = (Convert.ToBoolean(reader["mark"]) == false ? "0" : "1");
                             actionHeader.ActionByDiscount = reader["disc_only"].ToString().Trim();
                             actionHeader.TimeStart = reader["time_start"].ToString().Trim();
