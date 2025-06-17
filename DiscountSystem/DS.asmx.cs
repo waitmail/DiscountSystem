@@ -3776,7 +3776,7 @@ namespace DiscountSystem
             public string SumCashRemainder { get; set; }
             public string NumOrder { get; set; }
             public string NumOrder4 { get; set; }
-            public string VizaD { get; set; }
+            //public string VizaD { get; set; }
             public string SystemTaxation { get; set; }
             public string Guid { get; set; }
             public string SBP { get; set; }
