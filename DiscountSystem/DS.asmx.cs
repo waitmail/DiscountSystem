@@ -1107,6 +1107,45 @@ namespace DiscountSystem
 
 
         [WebMethod]
+        public byte[] GetFiles(string nick_shop, string data, string scheme)
+        {
+            byte[] result = new byte[0];
+            scheme = "4";
+
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+            decrypt_data = decrypt_data.Replace(@"\\", @"\");
+            // Удаление лишних кавычек
+            decrypt_data = decrypt_data.Replace("\"", "");
+
+            // Замена двойных слешей на одинарные
+            decrypt_data = decrypt_data.Replace(@"\\", @"\");
+
+            //DateTime lastWriteTime_cash = JsonConvert.DeserializeObject<DateTime>(decrypt_data);
+            //string filePath = "C:\\DistrCashProgram\\Russia\\Cash8.pdb";
+            string filePath = "C:\\DistrCashProgram\\Russia\\" + decrypt_data;
+            if (File.Exists(filePath))
+            {
+                FileInfo fileInfo = new FileInfo(filePath);
+                //DateTime lastWriteTime = fileInfo.LastWriteTime;
+                //if (lastWriteTime > lastWriteTime_cash)
+                //{
+                    result = File.ReadAllBytes(filePath);
+                //}
+            }
+
+            return result;
+        }
+
+
+        [WebMethod]
         public byte[] GetPDP(string nick_shop, string data, string scheme)
         {
             byte[] result = new byte[0];
