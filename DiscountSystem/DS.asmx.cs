@@ -28,8 +28,8 @@ namespace DiscountSystem
     public class DS : System.Web.Services.WebService
     {
 
-        private Int64 last_version_cash_program = 10919516312;
-
+        private Int64 last_version_cash_program = 10930626906;
+                                                  
         [WebMethod]
         public string HelloWorld()
         {
