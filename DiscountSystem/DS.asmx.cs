@@ -2285,6 +2285,7 @@ namespace DiscountSystem
         {
             public string AdvertisementText { get; set; }
             public string NumStr { get; set; }
+            public string Picture { get; set; }
 
             void IDisposable.Dispose()
             {
@@ -2687,7 +2688,7 @@ namespace DiscountSystem
                     }
                     reader.Close();
 
-                    query = " SELECT promo_active.code,shop,promo_text.text " +
+                    query = " SELECT promo_active.code,shop,promo_text.text,promo_text.picture " +
                         " FROM promo_active  LEFT JOIN promo_text " +
                         " ON promo_active.code = promo_text.code " +
                         " where promo_active.shop = '" + nick_shop + "'" +
@@ -2698,16 +2699,73 @@ namespace DiscountSystem
                     reader = command.ExecuteReader();
 
                     int numstr = 1;
+                    string delimiter = "_ПереносСтроки_";
+
                     while (reader.Read())
                     {
-                        using (PromoText promoText = new PromoText())
+                        // Инициализируем переменную для текста
+                        string text = string.Empty;
+
+                        // Проверяем, что reader["text"] не null и не DBNull.Value
+                        if (reader["text"] != DBNull.Value && reader["text"] != null)
                         {
-                            promoText.AdvertisementText = reader["text"].ToString();
-                            promoText.NumStr = numstr.ToString();
-                            numstr++;
-                            loadPacketData.ListPromoText.Add(promoText);
+                            text = reader["text"].ToString();
+                        }
+
+                        // Разделяем текст по разделителю
+                        string[] advertisementText = text.Split(new[] { delimiter }, StringSplitOptions.RemoveEmptyEntries);
+
+                        // Обрабатываем каждую подстроку
+                        foreach (string _advertisementText_ in advertisementText)
+                        {
+                            using (PromoText promoText = new PromoText())
+                            {
+                                // Устанавливаем текст
+                                promoText.AdvertisementText = _advertisementText_;
+                                promoText.NumStr = numstr.ToString();
+                                numstr++;
+
+                                // Обработка изображения
+                                if (reader["picture"] is byte[] bytes && bytes.Length > 0)
+                                {
+                                    promoText.Picture = Convert.ToBase64String(bytes);
+                                }
+                                else
+                                {
+                                    promoText.Picture = "";
+                                }
+
+                                // Добавляем объект в список
+                                loadPacketData.ListPromoText.Add(promoText);
+                            }
+                        }
+
+                        // Если текст был пустым или содержал только разделители, добавляем пустую запись
+                        if (advertisementText.Length == 0)
+                        {
+                            using (PromoText promoText = new PromoText())
+                            {
+                                promoText.AdvertisementText = ""; // Пустой текст
+                                promoText.NumStr = numstr.ToString();
+                                numstr++;
+
+                                // Обработка изображения
+                                if (reader["picture"] is byte[] bytes && bytes.Length > 0)
+                                {
+                                    promoText.Picture = Convert.ToBase64String(bytes);
+                                }
+                                else
+                                {
+                                    promoText.Picture = "";
+                                }
+
+                                // Добавляем объект в список
+                                loadPacketData.ListPromoText.Add(promoText);
+                            }
                         }
                     }
+
+                    // Закрываем reader                    
                     reader.Close();
 
                     query = " SELECT action_clients.num_doc,code_client FROM action_clients " +
