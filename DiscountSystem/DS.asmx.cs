@@ -208,6 +208,7 @@ namespace DiscountSystem
             public string rights { get; set; }
             public string password_m { get; set; }
             public string password_b { get; set; }
+            public string fiscals_forbidden { get; set; }
         }
 
 
@@ -263,7 +264,7 @@ namespace DiscountSystem
                 //    "   users.code=users_shops.code WHERE users_shops.shop='" + nick_shop + "'  OR users_shops.shop=''";
                 //string query = " SELECT users.user_id,users.name,users.rights,users_shops.shop,users.password_m,users.password_b FROM users  " +
                 //               " LEFT JOIN users_shops ON users.user_id = users_shops.user_id WHERE users_shops.shop = '" + nick_shop + "'  OR users_shops.shop = ''";
-                string query = " SELECT users.user_id,users.name,users_shops.rights,users_shops.shop,users.password_m,users.password_b FROM users  " +
+                string query = " SELECT users.user_id,users.name,users_shops.rights,users_shops.shop,users.password_m,users.password_b,users_shops.fiscals_forbidden FROM users  " +
                                " LEFT JOIN users_shops ON users.user_id = users_shops.user_id WHERE users_shops.shop = '" + nick_shop + "'  OR users_shops.shop = ''";
 
                 SqlCommand command = new SqlCommand(query, conn);
@@ -272,12 +273,13 @@ namespace DiscountSystem
                 while (reader.Read())
                 {
                     User user = new User();
-                    user.user_id    = reader["user_id"].ToString();
-                    user.shop       = reader["shop"].ToString();
-                    user.name       = reader["name"].ToString();
-                    user.rights     = reader["rights"].ToString();
-                    user.password_m = reader["password_m"].ToString();
-                    user.password_b = reader["password_b"].ToString();
+                    user.user_id           = reader["user_id"].ToString();
+                    user.shop              = reader["shop"].ToString();
+                    user.name              = reader["name"].ToString();
+                    user.rights            = reader["rights"].ToString();
+                    user.password_m        = reader["password_m"].ToString();
+                    user.password_b        = reader["password_b"].ToString();
+                    user.fiscals_forbidden = reader["fiscals_forbidden"].ToString();
                     users.list_users.Add(user);                
                 }                              
             }
@@ -2331,62 +2333,62 @@ namespace DiscountSystem
             return byteArray;
         }
 
-        [WebMethod]
-        public string GetTovarCheckCDN(string nick_shop, string data, string scheme)
-        {
-            string result = "1";
-            scheme = "4";
-            if (check_avalible_dataV8(scheme))
-            {
-                return result = "-1";
-            }
+        //[WebMethod]
+        //public string GetTovarCheckCDN(string nick_shop, string data, string scheme)
+        //{
+        //    string result = "1";
+        //    scheme = "4";
+        //    if (check_avalible_dataV8(scheme))
+        //    {
+        //        return result = "-1";
+        //    }
 
-            //Проверка доступа 
-            string code_shop = get_id_database(nick_shop, scheme);
-            if (code_shop.Trim().Length == 0)
-            {
-                return result = "-1";
-            }
+        //    //Проверка доступа 
+        //    string code_shop = get_id_database(nick_shop, scheme);
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        return result = "-1";
+        //    }
 
-            if (nick_shop.Trim().Length == 0)
-            {
-                return result = "-1";
-            }
+        //    if (nick_shop.Trim().Length == 0)
+        //    {
+        //        return result = "-1";
+        //    }
 
-            string count_day = CryptorEngine.get_count_day();
-            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
-            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
-            if (decrypt_data != code_shop)
-            {
-                result = "-1";
-            }
-            else
-            {
-                SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
-                try
-                {
-                    conn.Open();
-                    string query = "SELECT CDN_verification_enabled FROM shops where code ='" + nick_shop + "'";
-                    SqlCommand command = new SqlCommand(query, conn);
-                    result = Convert.ToInt16(command.ExecuteScalar()).ToString();
-                    conn.Close();
-                    command.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    result = "-1";
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
-            }
-            result = CryptorEngine.Encrypt(result, true, key);
-            return result;
-        }
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+        //    if (decrypt_data != code_shop)
+        //    {
+        //        result = "-1";
+        //    }
+        //    else
+        //    {
+        //        SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
+        //        try
+        //        {
+        //            conn.Open();
+        //            string query = "SELECT CDN_verification_enabled FROM shops where code ='" + nick_shop + "'";
+        //            SqlCommand command = new SqlCommand(query, conn);
+        //            result = Convert.ToInt16(command.ExecuteScalar()).ToString();
+        //            conn.Close();
+        //            command.Dispose();
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            result = "-1";
+        //        }
+        //        finally
+        //        {
+        //            if (conn.State == ConnectionState.Open)
+        //            {
+        //                conn.Close();
+        //            }
+        //        }
+        //    }
+        //    result = CryptorEngine.Encrypt(result, true, key);
+        //    return result;
+        //}
 
 
 
@@ -2487,57 +2489,30 @@ namespace DiscountSystem
 
                         using (Tovar tovar = new Tovar())
                         {
-                            //if (scheme != "4")
-                            //{
-                            //    tovar.Code = reader["code"].ToString();
-                            //    tovar.Name = reader["name"].ToString();
-                            //    tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
-                            //    tovar.ItsDeleted = reader["its_deleted"].ToString();
-                            //    tovar.Nds = reader["nds"].ToString();
-                            //    tovar.ItsCertificate = reader["its_certificate"].ToString();
-                            //    //tovar.PercentBonus = reader["percent_bonus"].ToString().Replace(",", ".");
-                            //    //tovar.TnVed = reader["tnved"].ToString();
-                            //    tovar.PercentBonus = "0";
-                            //    tovar.TnVed = "";
-                            //    tovar.ItsMarked = reader["its_marked"].ToString();
-                            //    tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
-                            //    tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
-                            //    tovar.Fractional = Convert.ToBoolean(reader["fractional_quantity"]).ToString();
-                            //}
-                            //else
-                            //{
+                           
                             tovar.Code = reader["code"].ToString();
                             tovar.Name = reader["name"].ToString();
                             tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
                             tovar.ItsDeleted = (Convert.ToBoolean(reader["its_deleted"]) == false ? "0" : "1");
                             tovar.Nds = reader["nds"].ToString();
-                            tovar.ItsCertificate = (Convert.ToBoolean(reader["its_certificate"]) == false ? "0" : "1");//reader["its_certificate"].ToString();
+                            tovar.ItsCertificate = (Convert.ToBoolean(reader["its_certificate"]) == false ? "0" : "1");
                             tovar.PercentBonus = "0";
                             tovar.TnVed = "";
-                            tovar.ItsMarked = (Convert.ToBoolean(reader["its_marked"]) == false ? "0" : "1"); //reader["its_marked"].ToString();
+                            tovar.ItsMarked = (Convert.ToBoolean(reader["its_marked"]) == false ? "0" : "1");
                             tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
                             tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
                             tovar.Fractional = Convert.ToBoolean(reader["fractional_quantity"]).ToString();
-                            tovar.RefusalOfMarking = Convert.ToBoolean(reader["refusal_of_marking"]).ToString();
-                            //}
+                            tovar.RefusalOfMarking = Convert.ToBoolean(reader["refusal_of_marking"]).ToString();                            
                             loadPacketData.ListTovar.Add(tovar);
                         }
                     }
                     reader.Close();
-                    //if (scheme != "4")
-                    //{
-                    //    query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode WHERE barcode.tovar_code in(" +
-                    //            " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
-                    //}
-                    //else
-                    //{
+                   
                         query = " SELECT tovar_barcode.tovar_code, tovar_barcode.barcode  FROM tovar_barcode WHERE tovar_barcode.tovar_code in(" +
                                 " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
-                    //}
-                    //" IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
+                    
                     query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
-
-                    //query = " SELECT barcode.tovar_code, barcode.barcode  FROM barcode"; 
+                    
 
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
@@ -2643,33 +2618,16 @@ namespace DiscountSystem
                     }
                     reader.Close();
 
-                    //if (scheme != "4")
-                    //{
-                    //    query = " SELECT characteristic.tovar_code, characteristic.guid, characteristic.name, prices.price AS retail_price" +
-                    //    " FROM characteristic LEFT JOIN prices ON characteristic.guid = prices.characteristic  where shop = '" + nick_shop + "' AND prices.characteristic is not null " +
-                    //    " GROUP BY characteristic.tovar_code, characteristic.guid, characteristic.name,prices.price";
-                    //    command = new SqlCommand(query, conn);
-                    //    command.CommandTimeout = 120;
-                    //    reader = command.ExecuteReader();
 
-                    //    loadPacketData.ListCharacteristic = new List<Characteristic>();
-                    //    while (reader.Read())
-                    //    {
-                    //        using (Characteristic characteristic = new Characteristic())
-                    //        {
-                    //            characteristic.CodeTovar = reader["tovar_code"].ToString();
-                    //            characteristic.Guid = reader["guid"].ToString();
-                    //            characteristic.Name = reader["name"].ToString();
-                    //            characteristic.RetailPrice = reader["retail_price"].ToString().Replace(",", ".");
-                    //            loadPacketData.ListCharacteristic.Add(characteristic);
-                    //        }
-                    //    }
-                    //    reader.Close();
-                    //}
+                    //Попытка обойти проблему когда для сертификатов нет цены , а именно для номенклатуры сертификата.
+                    // Создаем HashSet с кодами товаров один раз
+                    var tovarCodes = new HashSet<string>(loadPacketData.ListTovar.Select(t => t.Code));
 
-                    //query = "SELECT code,code_tovar,rating,is_active  FROM certificate";
+                    // Создаем HashSet для запоминания уже проверенных кодов
+                    var checkedCodes = new HashSet<string>();
+
                     query = " SELECT code,code_tovar,rating,is_active FROM certificate WHERE network_ID in(SELECT network_ID FROM shops where code='" + nick_shop + "')";
-                    //query = " SELECT code,code_tovar,rating,is_active FROM certificate WHERE network_ID exists(SELECT network_ID FROM shops where code='" + nick_shop + "')";
+                    
                     command = new SqlCommand(query, conn);
                     command.CommandTimeout = 120;
                     reader = command.ExecuteReader();
@@ -2677,13 +2635,34 @@ namespace DiscountSystem
                     loadPacketData.ListSertificate = new List<Sertificate>();
                     while (reader.Read())
                     {
-                        using (Sertificate sertificate = new Sertificate())
+                        //Здесь необходимо поставить проверку на наличие цены и наличие самого товара которому будет сопоставлен сертификат
+                        string codeTovar = reader["code_tovar"].ToString();
+
+                        // Проверяем, не проверяли ли мы уже этот код
+                        bool isValid;
+                        if (checkedCodes.Contains(codeTovar))
                         {
-                            sertificate.Code = reader["code"].ToString();
-                            sertificate.CodeTovar = reader["code_tovar"].ToString();
-                            sertificate.Rating = reader["rating"].ToString();
-                            sertificate.IsActive = (Convert.ToBoolean(reader["is_active"]) == false ? "0" : "1"); // reader["is_active"].ToString();
-                            loadPacketData.ListSertificate.Add(sertificate);
+                            // Если уже проверяли и добавили в checkedCodes, значит код валидный
+                            isValid = true;
+                        }
+                        else
+                        {
+                            // Первый раз видим этот код - проверяем
+                            isValid = tovarCodes.Contains(codeTovar);
+                            // Запоминаем результат проверки
+                            checkedCodes.Add(codeTovar);
+                        }
+
+                        if (isValid)
+                        {
+                            using (Sertificate sertificate = new Sertificate())
+                            {
+                                sertificate.Code = reader["code"].ToString();
+                                sertificate.CodeTovar = reader["code_tovar"].ToString();
+                                sertificate.Rating = reader["rating"].ToString();
+                                sertificate.IsActive = (Convert.ToBoolean(reader["is_active"]) == false ? "0" : "1");
+                                loadPacketData.ListSertificate.Add(sertificate);
+                            }
                         }
                     }
                     reader.Close();
@@ -2926,7 +2905,10 @@ namespace DiscountSystem
                 conn.Open();
                 string query = "UPDATE cashbox SET version = " + resultGetData.Version + " ,date_time_import = '" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'," +
                                        "verOS='" + resultGetData.OSVersion +"',device_info='"+resultGetData.DeviceInfo+"' ," +
-                                       " printing_library = " + resultGetData.PrintingLibraryes +
+                                       " printing_library = " + resultGetData.PrintingLibrary +","+
+                                       " version_printing_library = '" + resultGetData.VersionPrintingLibrary +"',"+
+                                       " variant_use_printing_library = " + resultGetData.VariantUsePrintingLibrary +
+
                     " WHERE shop='" + nick_shop + "' AND num_cash=" + resultGetData.NumCash;
                 SqlCommand command = new SqlCommand(query, conn);
                 int result_update = command.ExecuteNonQuery();
@@ -2938,13 +2920,17 @@ namespace DiscountSystem
                         ",version" +
                         ",date_time_import"+
                         ",verOS"+
-                        ",device_info)VALUES('" +
+                        ",device_info," +
+                        "version_printing_library," +
+                        "variant_use_printing_library)VALUES('" +
                         nick_shop + "'," +
                         resultGetData.NumCash + "," +
                         resultGetData.Version + ",'" +
                         DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "','"+
                         resultGetData.OSVersion+"','" +
-                        resultGetData.DeviceInfo+"')";
+                        resultGetData.DeviceInfo+"','"+
+                        resultGetData.VersionPrintingLibrary+"',"+
+                        resultGetData.VariantUsePrintingLibrary+")";
                     command = new SqlCommand(query, conn);
                     command.ExecuteNonQuery();
                 }
@@ -3003,8 +2989,10 @@ namespace DiscountSystem
             {
                 conn.Open();
                 string query = "UPDATE cashbox SET version = " + resultGetData.Version + " ,date_time_online = '" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'," +
-                    "printing_library = "+ resultGetData.PrintingLibraryes +
-                    " WHERE shop='" + nick_shop + "' AND num_cash=" + resultGetData.NumCash;
+                     " printing_library = "+ resultGetData.PrintingLibrary +","+
+                     " version_printing_library = '" + resultGetData.VersionPrintingLibrary + "'," +
+                     " variant_use_printing_library = " + resultGetData.VariantUsePrintingLibrary +
+                     " WHERE shop='" + nick_shop + "' AND num_cash=" + resultGetData.NumCash;
                 SqlCommand command = new SqlCommand(query, conn);
                 int result_update = command.ExecuteNonQuery();
                 if (result_update == 0)
@@ -3019,7 +3007,7 @@ namespace DiscountSystem
                         resultGetData.NumCash + "," +
                         resultGetData.Version + ",'" +
                         DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "',"+
-                        resultGetData.PrintingLibraryes+")";
+                        resultGetData.PrintingLibrary+")";
                     command = new SqlCommand(query, conn);
                     result_update = command.ExecuteNonQuery();
                 }
@@ -3051,7 +3039,9 @@ namespace DiscountSystem
             public string Version { get; set; }
             public string OSVersion { get; set; }
             public string DeviceInfo { get; set; }
-            public string PrintingLibraryes { get; set; }
+            public string PrintingLibrary { get; set; }
+            public string VersionPrintingLibrary { get; set; }
+            public string VariantUsePrintingLibrary { get; set; }
         }
 
         /// <summary>
