@@ -2191,7 +2191,8 @@ namespace DiscountSystem
             public string CdnCheck { get; set; }
             public string Fractional { get; set; }
             public string RefusalOfMarking { get; set; }
-            
+            public string RrNotControlOwner { get; set; }
+
 
             void IDisposable.Dispose()
             {
@@ -2454,7 +2455,7 @@ namespace DiscountSystem
                         " CREATE CLUSTERED INDEX tovar_code_index ON #t_t_nick_shop_num_cash (tovar_code ASC);" +
                         " CREATE CLUSTERED INDEX code_index ON #t_t2_nick_shop_num_cash (code ASC);" +
                         //" SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise,rr_mark," +
-                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.its_marked,tovar.its_excise,rr_mark,fractional_quantity,tovar.refusal_of_marking," +
+                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.its_marked,tovar.its_excise,rr_mark,fractional_quantity,tovar.refusal_of_marking,tovar.rr_not_control_owner," +
                         " COALESCE(#t_t2_nick_shop_num_cash.code, #t_t_nick_shop_num_cash.tovar_code) AS code," +
                         " CASE WHEN #t_t2_nick_shop_num_cash.personal_price IS NOT NULL THEN " +
                         " #t_t2_nick_shop_num_cash.personal_price " +
@@ -2502,7 +2503,8 @@ namespace DiscountSystem
                             tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
                             tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
                             tovar.Fractional = Convert.ToBoolean(reader["fractional_quantity"]).ToString();
-                            tovar.RefusalOfMarking = Convert.ToBoolean(reader["refusal_of_marking"]).ToString();                            
+                            tovar.RefusalOfMarking = Convert.ToBoolean(reader["refusal_of_marking"]).ToString(); 
+                            tovar.RrNotControlOwner = Convert.ToBoolean(reader["rr_not_control_owner"]).ToString();
                             loadPacketData.ListTovar.Add(tovar);
                         }
                     }
