@@ -2832,8 +2832,155 @@ namespace DiscountSystem
             //int seconds = (DateTime.Now - dt_start).Seconds;
             return result;
         }
-        
-        
+
+        class OpenCloseShop
+        {
+            public DateTime? Open { get; set; }
+            public DateTime? Close { get; set; }
+            public DateTime Date { get; set; }
+            public bool ItsSent { get; set; }
+        }
+
+        [WebMethod]
+        public bool UploadOpeningClosingShops(string nick_shop, string data, string scheme)
+        {
+            bool result = false;
+
+            scheme = "4"; // Фиксированная схема, как в оригинале
+
+            string code_shop = get_id_database(nick_shop, "4");
+            if (string.IsNullOrWhiteSpace(code_shop))
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+
+            try
+            {
+                string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+                List<OpenCloseShop> openCloseShops = JsonConvert.DeserializeObject<List<OpenCloseShop>>(decrypt_data);
+
+                using (var sqlConn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme))))
+                {
+                    sqlConn.Open();
+
+                    using (var transaction = sqlConn.BeginTransaction())
+                    {
+                        try
+                        {
+                            foreach (var openCloseShop in openCloseShops)
+                            {
+                                DateTime targetDate = openCloseShop.Date.Date;
+
+                                // Проверяем, существует ли запись
+                                string checkQuery = @"SELECT [opening], [closing] 
+                                              FROM [dbo].[OpeningClosingShops] 
+                                              WHERE [shop] = @shop AND [date] = @date";
+
+                                DateTime? existingOpening = null;
+                                DateTime? existingClosing = null;
+
+                                using (var checkCommand = new SqlCommand(checkQuery, sqlConn, transaction))
+                                {
+                                    checkCommand.Parameters.AddWithValue("@shop", nick_shop);
+                                    checkCommand.Parameters.AddWithValue("@date", targetDate);
+
+                                    using (var reader = checkCommand.ExecuteReader())
+                                    {
+                                        if (reader.Read())
+                                        {
+                                            existingOpening = reader["opening"] as DateTime?;
+                                            existingClosing = reader["closing"] as DateTime?;
+                                        }
+                                    }
+                                }
+
+                                if (existingOpening == null && existingClosing == null)
+                                {
+                                    // Запись не существует — вставляем новую
+                                    string insertQuery = @"INSERT INTO [dbo].[OpeningClosingShops] 
+                                                 ([shop], [date], [opening], [closing]) 
+                                                 VALUES (@shop, @date, @opening, @closing)";
+
+                                    using (var insertCommand = new SqlCommand(insertQuery, sqlConn, transaction))
+                                    {
+                                        insertCommand.Parameters.AddWithValue("@shop", nick_shop);
+                                        insertCommand.Parameters.AddWithValue("@date", targetDate);
+                                        insertCommand.Parameters.AddWithValue("@opening", (object)openCloseShop.Open ?? DBNull.Value);
+                                        insertCommand.Parameters.AddWithValue("@closing", (object)openCloseShop.Close ?? DBNull.Value);
+                                        insertCommand.ExecuteNonQuery();
+                                    }
+                                }
+                                else
+                                {
+                                    // Запись существует — обновляем по условиям
+                                    bool needsUpdate = false;
+                                    var newOpening = openCloseShop.Open;
+                                    var newClosing = openCloseShop.Close;
+
+                                    // Обновляем opening ТОЛЬКО если новое значение РАНЬШЕ существующего (или NULL в БД)
+                                    if (newOpening.HasValue)
+                                    {
+                                        if (!existingOpening.HasValue || newOpening.Value < existingOpening.Value)
+                                        {
+                                            needsUpdate = true;
+                                        }
+                                    }
+
+                                    // Обновляем closing ТОЛЬКО если новое значение ПОЗЖЕ существующего (или NULL в БД)
+                                    if (newClosing.HasValue)
+                                    {
+                                        if (!existingClosing.HasValue || newClosing.Value > existingClosing.Value)
+                                        {
+                                            needsUpdate = true;
+                                        }
+                                    }
+
+                                    if (needsUpdate)
+                                    {
+                                        string updateQuery = @"UPDATE [dbo].[OpeningClosingShops] 
+                                                     SET [opening] = @opening, [closing] = @closing 
+                                                     WHERE [shop] = @shop AND [date] = @date";
+
+                                        using (var updateCommand = new SqlCommand(updateQuery, sqlConn, transaction))
+                                        {
+                                            updateCommand.Parameters.AddWithValue("@shop", nick_shop);
+                                            updateCommand.Parameters.AddWithValue("@date", targetDate);
+                                            updateCommand.Parameters.AddWithValue("@opening", (object)newOpening ?? DBNull.Value);
+                                            updateCommand.Parameters.AddWithValue("@closing", (object)newClosing ?? DBNull.Value);
+                                            updateCommand.ExecuteNonQuery();
+                                        }
+                                    }
+                                }
+                            }
+
+                            transaction.Commit();
+                            result = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            result = false;
+                            // Логирование ошибки (раскомментируй при необходимости)
+                            // MainStaticClass.WriteRecordErrorLog(ex, 0, MainStaticClass.CashDeskNumber, "Ошибка отправки данных магазина");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result = false;
+                //MessageBox.Show("Ошибка подключения к удаленной системе: " + ex.Message);
+                //MainStaticClass.WriteRecordErrorLog(ex, 0, MainStaticClass.CashDeskNumber, "Подключение к удаленной системе");
+            }
+
+            return result;
+        }
+
+
+
         private void insert_errors_GetDataForCasheV8Jason(string shop,string num_cash,string info,string scheme)
         {
             SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
