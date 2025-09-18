@@ -2962,18 +2962,14 @@ namespace DiscountSystem
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            result = false;
-                            // Логирование ошибки (раскомментируй при необходимости)
-                            // MainStaticClass.WriteRecordErrorLog(ex, 0, MainStaticClass.CashDeskNumber, "Ошибка отправки данных магазина");
+                            result = false;                            
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                result = false;
-                //MessageBox.Show("Ошибка подключения к удаленной системе: " + ex.Message);
-                //MainStaticClass.WriteRecordErrorLog(ex, 0, MainStaticClass.CashDeskNumber, "Подключение к удаленной системе");
+                result = false;                
             }
 
             return result;
