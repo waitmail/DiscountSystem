@@ -2916,7 +2916,9 @@ namespace DiscountSystem
                                 else
                                 {
                                     // Запись существует — обновляем по условиям
-                                    bool needsUpdate = false;
+                                    bool needsUpdateOpen = false;
+                                    bool needsUpdateClose = false;
+
                                     var newOpening = openCloseShop.Open;
                                     var newClosing = openCloseShop.Close;
 
@@ -2925,7 +2927,7 @@ namespace DiscountSystem
                                     {
                                         if (!existingOpening.HasValue || newOpening.Value < existingOpening.Value)
                                         {
-                                            needsUpdate = true;
+                                            needsUpdateOpen = true;
                                         }
                                     }
 
@@ -2934,22 +2936,35 @@ namespace DiscountSystem
                                     {
                                         if (!existingClosing.HasValue || newClosing.Value > existingClosing.Value)
                                         {
-                                            needsUpdate = true;
+                                            needsUpdateClose = true;
                                         }
                                     }
 
-                                    if (needsUpdate)
+                                    if (needsUpdateOpen)
                                     {
                                         string updateQuery = @"UPDATE [dbo].[OpeningClosingShops] 
-                                                     SET [opening] = @opening, [closing] = @closing 
+                                                     SET [opening] = @opening
                                                      WHERE [shop] = @shop AND [date] = @date";
 
                                         using (var updateCommand = new SqlCommand(updateQuery, sqlConn, transaction))
                                         {
                                             updateCommand.Parameters.AddWithValue("@shop", nick_shop);
                                             updateCommand.Parameters.AddWithValue("@date", targetDate);
-                                            updateCommand.Parameters.AddWithValue("@opening", (object)newOpening ?? DBNull.Value);
-                                            updateCommand.Parameters.AddWithValue("@closing", (object)newClosing ?? DBNull.Value);
+                                            updateCommand.Parameters.AddWithValue("@opening", newOpening);                                            
+                                            updateCommand.ExecuteNonQuery();
+                                        }
+                                    }
+                                    if (needsUpdateClose)
+                                    {
+                                        string updateQuery = @"UPDATE [dbo].[OpeningClosingShops] 
+                                                     SET [closing] = @closing 
+                                                     WHERE [shop] = @shop AND [date] = @date";
+
+                                        using (var updateCommand = new SqlCommand(updateQuery, sqlConn, transaction))
+                                        {
+                                            updateCommand.Parameters.AddWithValue("@shop", nick_shop);
+                                            updateCommand.Parameters.AddWithValue("@date", targetDate);                                            
+                                            updateCommand.Parameters.AddWithValue("@closing", newClosing);
                                             updateCommand.ExecuteNonQuery();
                                         }
                                     }
