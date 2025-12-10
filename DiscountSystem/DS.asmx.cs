@@ -2041,17 +2041,59 @@ namespace DiscountSystem
             StringBuilder sb = new StringBuilder();
             HashSet<string> uniqueGuids = new HashSet<string>();
 
+            //foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
+            //{
+            //    if (uniqueGuids.Add(deletedItem.guid))
+            //    {
+            //        sb.Append("DELETE FROM deleted_items WHERE guid ='" + deletedItem.guid + "';");
+            //    }            
+            //}
+
+            //foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
+            //{
+            //    sb.Append("INSERT INTO deleted_items" +
+            //        "    (shop" +
+            //        "    ,num_doc" +
+            //        "    ,num_cash" +
+            //        "    ,date_time_start" +
+            //        "    ,date_time_action" +
+            //        "    ,tovar" +
+            //        "    ,quantity" +
+            //        "    ,type_of_operation" +
+            //        "    ,guid" +
+            //        "    ,autor"+
+            //        "    ,reason)" +
+            //        "    VALUES ('" +
+            //             nick_shop + "'," +
+            //             deletedItem.num_doc + "," +
+            //             deletedItem.num_cash + ",'" +
+            //              deletedItem.date_time_start + "','" +
+            //              deletedItem.date_time_action + "'," +
+            //              deletedItem.tovar + "," +
+            //              deletedItem.quantity + "," +
+            //              deletedItem.type_of_operation +",'"+
+            //              deletedItem.guid+"','"+
+            //              deletedItem.autor+"','"+
+            //              deletedItem.reason+"');");
+            //}
+            //string query = sb.ToString();
+            //result = insert_deleted_items(query, scheme);
+            //if (result == "1")
+            //{                
+            //    result = insert_deleted_items(query.Replace("deleted_items", "sales_deleted_items"), "4");
+            //}           
+
             foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
             {
                 if (uniqueGuids.Add(deletedItem.guid))
                 {
-                    sb.Append("DELETE FROM deleted_items WHERE guid ='" + deletedItem.guid + "';");
-                }            
+                    sb.Append("DELETE FROM sales_deleted_items WHERE guid ='" + deletedItem.guid + "';");
+                }
             }
-                
+
             foreach (DeletedItem deletedItem in deletedItems.ListDeletedItem)
             {
-                sb.Append("INSERT INTO deleted_items" +
+                sb.Append("INSERT INTO sales_deleted_items" +
                     "    (shop" +
                     "    ,num_doc" +
                     "    ,num_cash" +
@@ -2061,7 +2103,7 @@ namespace DiscountSystem
                     "    ,quantity" +
                     "    ,type_of_operation" +
                     "    ,guid" +
-                    "    ,autor"+
+                    "    ,autor" +
                     "    ,reason)" +
                     "    VALUES ('" +
                          nick_shop + "'," +
@@ -2071,17 +2113,17 @@ namespace DiscountSystem
                           deletedItem.date_time_action + "'," +
                           deletedItem.tovar + "," +
                           deletedItem.quantity + "," +
-                          deletedItem.type_of_operation +",'"+
-                          deletedItem.guid+"','"+
-                          deletedItem.autor+"','"+
-                          deletedItem.reason+"');");
+                          deletedItem.type_of_operation + ",'" +
+                          deletedItem.guid + "','" +
+                          deletedItem.autor + "','" +
+                          deletedItem.reason + "');");
             }
             string query = sb.ToString();
             result = insert_deleted_items(query, scheme);
-            if (result == "1")
-            {                
-                result = insert_deleted_items(query.Replace("deleted_items", "sales_deleted_items"), "4");
-            }           
+            //if (result == "1")
+            //{
+            //    result = insert_deleted_items(query.Replace("deleted_items", "sales_deleted_items"), "4");
+            //}
 
             return result;
 
