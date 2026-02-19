@@ -15,6 +15,7 @@ using System.Diagnostics;
 using Newtonsoft.Json;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 
 
 namespace DiscountSystem
@@ -29,7 +30,10 @@ namespace DiscountSystem
     {
 
         private Int64 last_version_cash_program = 10930626906;
-                                                  
+        private Int64 last_version_cash_program_avalon = 1771498375;
+                                                            
+
+
         [WebMethod]
         public string HelloWorld()
         {
@@ -1043,39 +1047,146 @@ namespace DiscountSystem
             return result;
         }
 
-        //[WebMethod]
-        //public byte[] GetUpdateProgram(string nick_shop, string data)
-        //{
-        //    byte[] result = new byte[0];
 
-        //    string code_shop = get_id_database(nick_shop, "1");
-        //    if (code_shop.Trim().Length == 0)
-        //    {
-        //        return result;
-        //    }
+        [WebMethod]
+        public string ExistsUpdateProrgamAvalon(string nick_shop, string data, string scheme)
+        {
+            string result = "";
+            scheme = "4";
 
-        //    string count_day = CryptorEngine.get_count_day();
-        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
-        //    string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
-        //    string[] d = decrypt_data.ToString().Split('|');
-        //    string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8.exe";
-        //    if (File.Exists(path_for_distr))
-        //    {
-        //        FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8.exe");
-        //        string cash_version = myFileVersionInfo.FileVersion;
-        //        Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
-        //        Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
-        //        if (local_version == remote_version)
-        //        {
-        //            result = File.ReadAllBytes(path_for_distr);
-        //        }
-        //    }
+            //nick_shop = "11109";
+            //data = "VCPMWuAQ8D64pJYjn+hEhUIaP45IBFswIr9XTnVFFXwm+Vv+F/xYuvPr/d0PzUNuZ6xqngzZmjQ/ruEhqu203kRBYwcx+n2WJwriXYPC6sKBDtlwgQ6Je6/HloILcCUp";
 
-        //    return result;
-        //}
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
 
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+            string[] d = decrypt_data.ToString().Split('|');
 
+            string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8Avalon.dll";
+            if (File.Exists(path_for_distr))
+            {
+                //FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo("C:\\DistrCashProgram\\Russia\\Cash8Avalon.dll");
+                //string cash_version = myFileVersionInfo.FileVersion;
+                string cash_version = GetExternalDllProductVersion(path_for_distr);
+                //Новое решение 
+                Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""))*100;
+                Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
+                if (local_version > remote_version)
+                {
+                    result = cash_version;
+                }
+                else
+                {
+                    result = d[1];
+                }
 
+                result = CryptorEngine.Encrypt(result+"000", true, key);
+
+            }
+
+            return result;
+        }
+                
+
+        [WebMethod]
+        public string GetUpdateProgramAvalon(string nick_shop, string data, string scheme)
+        {
+            string result = "";
+            scheme = "4";
+
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                return result;
+            }
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data.ToString(), true, key);
+            string[] d = decrypt_data.ToString().Split('|');
+
+            string path_for_distr = "C:\\DistrCashProgram\\Russia\\Cash8Avalon.dll";
+            if (File.Exists(path_for_distr))
+            {
+                //FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo(path_for_distr);
+                
+                //string cash_version = myFileVersionInfo.FileVersion;
+                string cash_version = GetExternalDllProductVersion(path_for_distr);
+
+                Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
+                Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
+
+                string versionToReturn = "";
+                if (local_version > remote_version)
+                {
+                    versionToReturn = cash_version;
+                }
+                else
+                {
+                    versionToReturn = d[1];
+                }
+
+                // Читаем файл в байты
+                byte[] fileBytes = File.ReadAllBytes(path_for_distr);
+
+                // Конвертируем байты в Base64 строку
+                string base64File = Convert.ToBase64String(fileBytes);
+
+                // Объединяем версию и файл в одну строку (например, через разделитель)
+                string combinedData = versionToReturn + "|" + base64File;
+
+                // Шифруем и возвращаем
+                result = CryptorEngine.Encrypt(combinedData, true, key);
+            }
+
+            return result;
+        }
+
+        private static string GetExternalDllProductVersion(string dllPath)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(dllPath) || !File.Exists(dllPath))
+                    return GetCurrentUnixTimestamp().ToString();
+
+                var versionInfo = FileVersionInfo.GetVersionInfo(dllPath);
+
+                // Пробуем получить ProductVersion
+                string productVersion = versionInfo.ProductVersion;
+
+                if (!string.IsNullOrEmpty(productVersion))
+                    return productVersion;
+
+                // Если ProductVersion пустой, пробуем FileVersion
+                string fileVersion = versionInfo.FileVersion;
+
+                if (!string.IsNullOrEmpty(fileVersion))
+                    return fileVersion;
+
+                // Если ничего не найдено, возвращаем timestamp
+                return GetCurrentUnixTimestamp().ToString();
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку если нужно
+                // Console.WriteLine($"Ошибка чтения версии DLL: {ex.Message}");
+                return GetCurrentUnixTimestamp().ToString();
+            }
+        }
+
+        private static long GetCurrentUnixTimestamp()
+        {
+            DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            TimeSpan timeSpan = DateTime.UtcNow - unixEpoch;
+            return (long)timeSpan.TotalSeconds;
+        }
+        
         [WebMethod]
         public byte[] GetNpgsqlNew(string nick_shop, string data, string scheme)
         {
@@ -2875,6 +2986,443 @@ namespace DiscountSystem
             return result;
         }
 
+
+        /// <summary>
+        /// Эта функция собирает информацию для кассы по ее коду
+        /// </summary>
+        [WebMethod]
+        public byte[] GetDataForCasheV8JasonAvalon(string nick_shop, string data, string scheme)
+        {
+            //DateTime dt_start = DateTime.Now;
+            //string result = "-1";
+            scheme = "4";
+            Byte[] result = Encoding.UTF8.GetBytes("-1");
+
+            if (check_avalible_dataV8(scheme))
+            {
+                //insert_errors_GetDataForCasheV8Jason(nick_shop, "2", "check_avalible_dataV8");                
+                return result = Encoding.UTF8.GetBytes("-1");
+            }
+
+            string code_shop = get_id_database(nick_shop, scheme);
+            if (code_shop.Trim().Length == 0)
+            {
+                //insert_errors_GetDataForCasheV8Jason(nick_shop, "2", " нема кода ");                
+                return result = Encoding.UTF8.GetBytes("-2");
+            }
+
+
+            string count_day = CryptorEngine.get_count_day();
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+            string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+            QueryPacketData queryPacketData = JsonConvert.DeserializeObject<QueryPacketData>(decrypt_data);
+
+            SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
+            using (LoadPacketData loadPacketData = new LoadPacketData())
+            {
+                if (Convert.ToDouble(queryPacketData.Version) < last_version_cash_program_avalon)
+                {
+                    loadPacketData.Exception = " У вас устаревшая версия программы. Перезапустите программу для её обновления. ";
+                }
+                loadPacketData.PacketIsFull = false;//Пакет полностью заполнен
+                loadPacketData.Exchange = false;//В базе идет обновление данных
+
+                try
+                {
+
+                    conn.Open();
+
+                    string query = "IF OBJECT_ID('tempdb..#t_t_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t_nick_shop_num_cash; " +
+                        " IF OBJECT_ID('tempdb..#t_t2_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t2_nick_shop_num_cash; " +
+                        " IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash; " +
+                        " SELECT prices_by_price_types.tovar_code AS tovar_code, prices_by_price_types.price AS prices_by_price_type INTO #t_t_nick_shop_num_cash from shops " +
+                        " LEFT JOIN prices_by_price_types ON shops.UID_type_of_prices = prices_by_price_types.UID_type_of_prices " +
+                        " WHERE shops.code = @nick_shop;" +
+                        " SELECT tovar.code,prices.price AS personal_price INTO #t_t2_nick_shop_num_cash " +
+                        //" FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  AND prices.characteristic IS NULL  GROUP BY code,price " +
+                        " FROM tovar LEFT JOIN prices  ON tovar.code = prices.tovar_code AND shop = @nick_shop  GROUP BY code,price " +
+                        " HAVING ISNULL(price, 0) > 0;" +
+                        " CREATE CLUSTERED INDEX tovar_code_index ON #t_t_nick_shop_num_cash (tovar_code ASC);" +
+                        " CREATE CLUSTERED INDEX code_index ON #t_t2_nick_shop_num_cash (code ASC);" +
+                        //" SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.percent_bonus,tovar.tnved,tovar.its_marked,tovar.its_excise,rr_mark," +
+                        " SELECT tovar.name,tovar.its_deleted,tovar.nds,tovar.its_certificate,tovar.its_marked,tovar.its_excise,rr_mark,fractional_quantity,tovar.refusal_of_marking,tovar.rr_not_control_owner," +
+                        " COALESCE(#t_t2_nick_shop_num_cash.code, #t_t_nick_shop_num_cash.tovar_code) AS code," +
+                        " CASE WHEN #t_t2_nick_shop_num_cash.personal_price IS NOT NULL THEN " +
+                        " #t_t2_nick_shop_num_cash.personal_price " +
+                        " ELSE " +
+                        " #t_t_nick_shop_num_cash.prices_by_price_type " +
+                        " END AS price  INTO #t_t3_nick_shop_num_cash " +
+                        " FROM  tovar LEFT JOIN #t_t_nick_shop_num_cash ON tovar.code =  #t_t_nick_shop_num_cash.tovar_code LEFT JOIN #t_t2_nick_shop_num_cash ON tovar.code =  #t_t2_nick_shop_num_cash.code " +
+                        " WHERE #t_t_nick_shop_num_cash.prices_by_price_type IS NOT NULL  OR #t_t2_nick_shop_num_cash.personal_price IS NOT NULL;" +
+                        " IF OBJECT_ID('tempdb..#t_t_nick_shop_num_cash') IS NOT NULL  DROP TABLE #t_t_nick_shop_num_cash;" +
+                        " IF OBJECT_ID('tempdb..#t_t2_nick_shop_num_cash') IS NOT NULL  DROP TABLE #t_t2_nick_shop_num_cash;" +
+                        " CREATE CLUSTERED INDEX code_index ON #t_t3_nick_shop_num_cash (code ASC);";
+
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+                    query = query.Replace("@nick_shop", "'" + nick_shop + "'");
+
+                    //INTO #t_t3_nick_shop_num_cash  
+                    SqlCommand command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    command.ExecuteNonQuery();
+
+
+                    query = " SELECT * FROM #t_t3_nick_shop_num_cash ";
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+
+                    command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    SqlDataReader reader = command.ExecuteReader();
+
+                    loadPacketData.ListTovar = new List<Tovar>();
+                    while (reader.Read())
+                    {
+
+                        using (Tovar tovar = new Tovar())
+                        {
+
+                            tovar.Code = reader["code"].ToString();
+                            tovar.Name = reader["name"].ToString();
+                            tovar.RetailPrice = reader["price"].ToString().Replace(",", ".");
+                            tovar.ItsDeleted = (Convert.ToBoolean(reader["its_deleted"]) == false ? "0" : "1");
+                            tovar.Nds = reader["nds"].ToString();
+                            tovar.ItsCertificate = (Convert.ToBoolean(reader["its_certificate"]) == false ? "0" : "1");
+                            tovar.PercentBonus = "0";
+                            tovar.TnVed = "";
+                            tovar.ItsMarked = (Convert.ToBoolean(reader["its_marked"]) == false ? "0" : "1");
+                            tovar.ItsExcise = (Convert.ToBoolean(reader["its_excise"]) == false ? "0" : "1");
+                            tovar.CdnCheck = Convert.ToBoolean(reader["rr_mark"]).ToString();
+                            tovar.Fractional = Convert.ToBoolean(reader["fractional_quantity"]).ToString();
+                            tovar.RefusalOfMarking = Convert.ToBoolean(reader["refusal_of_marking"]).ToString();
+                            tovar.RrNotControlOwner = Convert.ToBoolean(reader["rr_not_control_owner"]).ToString();
+                            loadPacketData.ListTovar.Add(tovar);
+                        }
+                    }
+                    reader.Close();
+
+                    query = " SELECT tovar_barcode.tovar_code, tovar_barcode.barcode  FROM tovar_barcode WHERE tovar_barcode.tovar_code in(" +
+                            " SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash) ;";
+
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+                    
+                    command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    reader = command.ExecuteReader();
+
+                    loadPacketData.ListBarcode = new List<Barcode>();
+                    while (reader.Read())
+                    {
+                        using (Barcode barcode = new Barcode())
+                        {
+                            barcode.TovarCode = reader["tovar_code"].ToString();
+                            barcode.BarCode = reader["barcode"].ToString();
+                            loadPacketData.ListBarcode.Add(barcode);
+                        }
+                    }
+                    reader.Close();
+
+                    query = " SELECT date_start,date_end,action_active.num_doc,tip,barcode,persent,sum,comment, " +
+                            " mark,disc_only,time_start,time_end " +//" present,mark,disc_only,time_start,time_end " +
+                            " ,bonus_promotion,with_old_promotion,day_mon,day_tue" +
+                            " ,day_wed,day_thu,day_fri,day_sat,day_sun,promo_code" +
+                            " ,sum_bonus,execution_order,gift_price,kind,sum_2,picture " +
+                            " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
+                            " LEFT JOIN action_header ON action_active.num_doc = action_header.num_doc ";
+
+                    command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    reader = command.ExecuteReader();
+
+                    loadPacketData.ListActionHeader = new List<ActionHeader>();
+                    while (reader.Read())
+                    {
+                        using (ActionHeader actionHeader = new ActionHeader())
+                        {
+                            actionHeader.DateStarted = reader.GetDateTime(0).ToString("yyyy-MM-dd");
+                            actionHeader.DateEnd = reader.GetDateTime(1).ToString("yyyy-MM-dd");
+                            actionHeader.NumDoc = reader["num_doc"].ToString();
+                            actionHeader.Tip = reader["tip"].ToString();
+                            actionHeader.Barcode = reader["barcode"].ToString();
+                            //actionHeader.CodeTovar = reader["present"].ToString().Replace(",", ".");
+                            //actionHeader.CodeTovar = "0";// reader["present"].ToString().Replace(",", ".");
+                            actionHeader.Persent = reader["persent"].ToString().Replace(",", ".");
+                            actionHeader.sum = reader["sum"].ToString().Replace(",", ".");
+                            actionHeader.sum1 = reader["sum_2"].ToString().Replace(",", ".");
+                            actionHeader.Comment = reader["comment"].ToString().Trim().Replace("'", "");
+                            actionHeader.Marker = (Convert.ToBoolean(reader["mark"]) == false ? "0" : "1");
+                            actionHeader.ActionByDiscount = reader["disc_only"].ToString().Trim();
+                            actionHeader.TimeStart = reader["time_start"].ToString().Trim();
+                            actionHeader.TimeEnd = reader["time_end"].ToString().Trim();
+                            actionHeader.BonusPromotion = (Convert.ToBoolean(reader["bonus_promotion"]) == false ? "0" : "1");
+                            actionHeader.WithOldPromotion = (Convert.ToBoolean(reader["with_old_promotion"]) == false ? "0" : "1");
+                            actionHeader.Monday = (Convert.ToBoolean(reader["day_mon"]) == false ? "0" : "1"); //reader["day_mon"].ToString().Trim();
+                            actionHeader.Tuesday = (Convert.ToBoolean(reader["day_tue"]) == false ? "0" : "1"); //reader["day_tue"].ToString().Trim();
+                            actionHeader.Wednesday = (Convert.ToBoolean(reader["day_wed"]) == false ? "0" : "1");// reader["day_wed"].ToString().Trim();
+                            actionHeader.Thursday = (Convert.ToBoolean(reader["day_thu"]) == false ? "0" : "1");// reader["day_thu"].ToString().Trim();
+                            actionHeader.Friday = (Convert.ToBoolean(reader["day_fri"]) == false ? "0" : "1"); //reader["day_fri"].ToString().Trim();
+                            actionHeader.Saturday = (Convert.ToBoolean(reader["day_sat"]) == false ? "0" : "1"); //reader["day_sat"].ToString().Trim();
+                            actionHeader.Sunday = (Convert.ToBoolean(reader["day_sun"]) == false ? "0" : "1"); //reader["day_sun"].ToString().Trim();
+                            actionHeader.PromoCode = reader["promo_code"].ToString().Trim();
+                            actionHeader.SumBonus = reader["sum_bonus"].ToString().Trim();
+                            actionHeader.ExecutionOrder = reader["execution_order"].ToString().Trim();
+                            actionHeader.GiftPrice = reader["gift_price"].ToString().Replace(",", ".");
+                            actionHeader.Kind = reader["kind"].ToString();
+                            //actionHeader.Picture = (reader["picture"].ToString() == "" ? "" : Convert.ToBase64String((byte[])reader["picture"])); 
+                            if (reader["picture"] is byte[] bytes && bytes.Length > 0)
+                            {
+                                actionHeader.Picture = Convert.ToBase64String(bytes);
+                            }
+                            else
+                            {
+                                actionHeader.Picture = "";
+                            }
+
+                            loadPacketData.ListActionHeader.Add(actionHeader);
+                        }
+                    }
+                    reader.Close();
+
+                    query = " SELECT action_active.num_doc,action_table.num_list,action_table.tovar,action_table.price " +
+                        " FROM  (SELECT num_doc FROM action_active where shop='" + nick_shop + "') AS action_active " +
+                        " LEFT JOIN action_table ON action_active.num_doc = action_table.num_doc  WHERE action_table.tovar IN " +
+                        "(SELECT #t_t3_nick_shop_num_cash.code FROM #t_t3_nick_shop_num_cash);" +
+                        "IF OBJECT_ID('tempdb..#t_t3_nick_shop_num_cash') IS NOT NULL DROP TABLE #t_t3_nick_shop_num_cash;";
+
+                    query = query.Replace("_nick_shop_num_cash", nick_shop + "_" + queryPacketData.NumCash);
+
+                    command = new SqlCommand(query, conn);
+                    //command.CommandTimeout = 300;
+                    command.CommandTimeout = 120;
+                    reader = command.ExecuteReader();
+
+                    loadPacketData.ListActionTable = new List<ActionTable>();
+                    while (reader.Read())
+                    {
+                        using (ActionTable actionTable = new ActionTable())
+                        {
+                            actionTable.NumDoc = reader["num_doc"].ToString();
+                            actionTable.NumList = reader["num_list"].ToString();
+                            actionTable.CodeTovar = reader["tovar"].ToString();
+                            actionTable.Price = reader["price"].ToString().Replace(",", ".");
+                            loadPacketData.ListActionTable.Add(actionTable);
+                        }
+                    }
+                    reader.Close();
+
+
+                    //Попытка обойти проблему когда для сертификатов нет цены , а именно для номенклатуры сертификата.
+                    // Создаем HashSet с кодами товаров один раз
+                    var tovarCodes = new HashSet<string>(loadPacketData.ListTovar.Select(t => t.Code));
+
+                    // Создаем HashSet для запоминания уже проверенных кодов
+                    var checkedCodes = new HashSet<string>();
+
+                    query = " SELECT code,code_tovar,rating,is_active FROM certificate WHERE network_ID in(SELECT network_ID FROM shops where code='" + nick_shop + "')";
+
+                    command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    reader = command.ExecuteReader();
+
+                    loadPacketData.ListSertificate = new List<Sertificate>();
+                    while (reader.Read())
+                    {
+                        //Здесь необходимо поставить проверку на наличие цены и наличие самого товара которому будет сопоставлен сертификат
+                        string codeTovar = reader["code_tovar"].ToString();
+
+                        // Проверяем, не проверяли ли мы уже этот код
+                        bool isValid;
+                        if (checkedCodes.Contains(codeTovar))
+                        {
+                            // Если уже проверяли и добавили в checkedCodes, значит код валидный
+                            isValid = true;
+                        }
+                        else
+                        {
+                            // Первый раз видим этот код - проверяем
+                            isValid = tovarCodes.Contains(codeTovar);
+                            // Запоминаем результат проверки
+                            checkedCodes.Add(codeTovar);
+                        }
+
+                        if (isValid)
+                        {
+                            using (Sertificate sertificate = new Sertificate())
+                            {
+                                sertificate.Code = reader["code"].ToString();
+                                sertificate.CodeTovar = reader["code_tovar"].ToString();
+                                sertificate.Rating = reader["rating"].ToString();
+                                sertificate.IsActive = (Convert.ToBoolean(reader["is_active"]) == false ? "0" : "1");
+                                loadPacketData.ListSertificate.Add(sertificate);
+                            }
+                        }
+                    }
+                    reader.Close();
+
+                    query = " SELECT promo_active.code,shop,promo_text.text,promo_text.picture " +
+                        " FROM promo_active  LEFT JOIN promo_text " +
+                        " ON promo_active.code = promo_text.code " +
+                        " where promo_active.shop = '" + nick_shop + "'" +
+                        " order by promo_text.code ";
+                    loadPacketData.ListPromoText = new List<PromoText>();
+                    command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    reader = command.ExecuteReader();
+
+                    int numstr = 1;
+                    string delimiter = "_ПереносСтроки_";
+
+                    while (reader.Read())
+                    {
+                        // Инициализируем переменную для текста
+                        string text = string.Empty;
+
+                        // Проверяем, что reader["text"] не null и не DBNull.Value
+                        if (reader["text"] != DBNull.Value && reader["text"] != null)
+                        {
+                            text = reader["text"].ToString();
+                        }
+
+                        // Разделяем текст по разделителю
+                        string[] advertisementText = text.Split(new[] { delimiter }, StringSplitOptions.RemoveEmptyEntries);
+
+                        // Обрабатываем каждую подстроку
+                        foreach (string _advertisementText_ in advertisementText)
+                        {
+                            using (PromoText promoText = new PromoText())
+                            {
+                                // Устанавливаем текст
+                                promoText.AdvertisementText = _advertisementText_;
+                                promoText.NumStr = numstr.ToString();
+                                numstr++;
+
+                                // Обработка изображения
+                                if (reader["picture"] is byte[] bytes && bytes.Length > 0)
+                                {
+                                    promoText.Picture = Convert.ToBase64String(bytes);
+                                }
+                                else
+                                {
+                                    promoText.Picture = "";
+                                }
+
+                                // Добавляем объект в список
+                                loadPacketData.ListPromoText.Add(promoText);
+                            }
+                        }
+
+                        // Если текст был пустым или содержал только разделители, добавляем пустую запись
+                        if (advertisementText.Length == 0)
+                        {
+                            using (PromoText promoText = new PromoText())
+                            {
+                                promoText.AdvertisementText = ""; // Пустой текст
+                                promoText.NumStr = numstr.ToString();
+                                numstr++;
+
+                                // Обработка изображения
+                                if (reader["picture"] is byte[] bytes && bytes.Length > 0)
+                                {
+                                    promoText.Picture = Convert.ToBase64String(bytes);
+                                }
+                                else
+                                {
+                                    promoText.Picture = "";
+                                }
+
+                                // Добавляем объект в список
+                                loadPacketData.ListPromoText.Add(promoText);
+                            }
+                        }
+                    }
+
+                    // Закрываем reader                    
+                    reader.Close();
+
+                    query = " SELECT action_clients.num_doc,code_client FROM action_clients " +
+                            " LEFT JOIN action_active ON action_clients.num_doc=action_active.num_doc AND action_active.shop='" + nick_shop + "'";
+                    command = new SqlCommand(query, conn);
+                    command.CommandTimeout = 120;
+                    reader = command.ExecuteReader();
+
+                    loadPacketData.ListActionClients = new List<ActionClients>();
+                    while (reader.Read())
+                    {
+                        using (ActionClients actionClients = new ActionClients())
+                        {
+                            actionClients.NumDoc = reader["num_doc"].ToString();
+                            actionClients.CodeClient = reader["code_client"].ToString();
+                            loadPacketData.ListActionClients.Add(actionClients);
+                        }
+                    }
+                    reader.Close();
+
+                    query = "SELECT limit FROM constants";
+                    command = new SqlCommand(query, conn);
+
+                    loadPacketData.Threshold = Convert.ToInt32(command.ExecuteScalar());
+
+                    query = "SELECT COALESCE(crpt_api_key, '') AS crpt_api_key FROM shops  where code ='" + nick_shop + "'";
+                    command = new SqlCommand(query, conn);
+
+                    loadPacketData.TokenMark = command.ExecuteScalar().ToString();
+
+                    conn.Close();
+
+                    if (loadPacketData.Exception == null)
+                    {
+                        loadPacketData.PacketIsFull = true;
+                    }
+                    if (check_avalible_dataV8(scheme))
+                    {
+                        loadPacketData.Exchange = true;
+                    }
+                    //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "1" + "\r\n");
+                    //StringBuilder sb = new StringBuilder();
+                    //StringWriter sw = new StringWriter(sb);
+                    ////System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "2" + "\r\n");
+                    //using (JsonWriter textWriter = new JsonTextWriter(sw))
+                    //{
+                    //    var serializer = new JsonSerializer();
+                    //    serializer.Serialize(textWriter, loadPacketData);
+                    //}
+                    //System.IO.File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", "3" + "\r\n");
+                    string jason = JsonConvert.SerializeObject(loadPacketData, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+                    string jason_encrypt = CryptorEngine.Encrypt(jason, true, key);
+                    result = CompressString(jason_encrypt);
+
+                    //DateTime dt_finish = DateTime.Now;                    
+                    //query = "INSERT INTO stat (shop,date_time_begin ,date_time_end) VALUES " +
+                    //    "('" + nick_shop + "','" + dt_start.ToString("dd-MM-yyyy HH:mm:ss") + "','" + dt_finish.ToString("dd-MM-yyyy HH:mm:ss") + "')";                    
+                    //execute_insert_query(query, 2,scheme);                    
+                }
+                catch (SqlException ex)
+                {
+                    //return "-1"; здесь ничего не делаем 
+                    //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
+                    insert_errors_GetDataForCasheV8Jason(nick_shop, "1", ex.Message, scheme);
+                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + " " + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "\r\n");
+                }
+                catch (Exception ex)
+                {
+                    //return "-1"; здесь ничего не делаем 
+                    //loadPacketData.PacketIsFull останется false и так мы поймем , что пакет не полный
+                    insert_errors_GetDataForCasheV8Jason(nick_shop, "2", ex.Message + " " + DateTime.Now.ToString(), scheme);
+                    File.AppendAllText("C:\\DistrCashProgram\\Russia\\Test.txt", ex.Message + " " + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "\r\n");
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
+                }
+            }
+            //int seconds = (DateTime.Now - dt_start).Seconds;
+            return result;
+        }       
+                    
+
         class OpenCloseShop
         {
             public DateTime? Open { get; set; }
@@ -3851,9 +4399,9 @@ namespace DiscountSystem
                     
                     query_insert_data_on_sales4.Append(s);                    
                 }
-                
+
                 if (nick_shop != "A01")
-                {                    
+                {
                     result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
                 }
             }
