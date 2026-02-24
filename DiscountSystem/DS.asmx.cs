@@ -1075,7 +1075,7 @@ namespace DiscountSystem
                 //string cash_version = myFileVersionInfo.FileVersion;
                 string cash_version = GetExternalDllProductVersion(path_for_distr);
                 //Новое решение 
-                Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""))*100;
+                Int64 local_version = Convert.ToInt64(cash_version.Replace(".", ""));
                 Int64 remote_version = Convert.ToInt64(d[1].Replace(".", ""));
                 if (local_version > remote_version)
                 {
@@ -1086,7 +1086,7 @@ namespace DiscountSystem
                     result = d[1];
                 }
 
-                result = CryptorEngine.Encrypt(result+"000", true, key);
+                result = CryptorEngine.Encrypt(result, true, key);
 
             }
 
