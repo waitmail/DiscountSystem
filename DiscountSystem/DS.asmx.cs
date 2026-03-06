@@ -4098,55 +4098,130 @@ namespace DiscountSystem
         }
         
         [WebMethod]
+        //public bool UploadCDNLogsPortionJason(string nick_shop, string data, string scheme)
+        //{
+        //    bool result = false;
+
+        //    string code_shop = get_id_database(nick_shop, "4");
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        return result;
+        //    }
+
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();            
+        //    StringBuilder insert_data_cdn = new StringBuilder();            
+
+        //    string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+        //    CdnLogs logs = JsonConvert.DeserializeObject<CdnLogs>(decrypt_data);
+
+        //    string s = "";
+
+        //    foreach (CdnLog log in logs.ListCdnLog)
+        //    {
+        //        s = " DELETE FROM cdn_logs WHERE shop='"+nick_shop+
+        //            "' AND num_cash=" +log.NumCash+ 
+        //            " AND num_doc="+log.NumDoc+
+        //            " AND date_shop='"+log.DateShop+"';";
+        //        insert_data_cdn.Append(s);
+        //        s = "INSERT INTO cdn_logs" +
+        //            "(shop" +
+        //            ",num_cash" +
+        //            ",num_doc" +
+        //            ",date_shop" +
+        //            ",date_insert" +
+        //            ",mark" +
+        //            ",cdn_answer"+
+        //            ",status)" +
+        //            " VALUES ('" + nick_shop + "'" +
+        //            "," + log.NumCash +
+        //            "," + log.NumDoc +
+        //            ",'" + log.DateShop + "'" +
+        //            ",'" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'" +
+        //            ",'" + log.Mark + "'" +
+        //            ",'" + log.CdnAnswer + "'"+
+        //            ",'" + log.Status + "');";
+        //        insert_data_cdn.Append(s);
+        //    }
+        //    //if(insert_data_cdn.ToString().Length>0)
+
+        //    result = execute_insert_query(insert_data_cdn.ToString(), 2, "4");
+
+        //    return result;
+        //}
+
         public bool UploadCDNLogsPortionJason(string nick_shop, string data, string scheme)
         {
             bool result = false;
 
             string code_shop = get_id_database(nick_shop, "4");
-            if (code_shop.Trim().Length == 0)
-            {
+            if (string.IsNullOrWhiteSpace(code_shop))
                 return result;
-            }
 
             string count_day = CryptorEngine.get_count_day();
-            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();            
-            StringBuilder insert_data_cdn = new StringBuilder();            
+            string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
 
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             CdnLogs logs = JsonConvert.DeserializeObject<CdnLogs>(decrypt_data);
 
-            string s = "";
+            // Используем транзакцию для атомарности
+            result = execute_insert_query_with_parameters(logs, nick_shop, 2, "4");
 
-            foreach (CdnLog log in logs.ListCdnLog)
+            return result;
+        }
+
+        private bool execute_insert_query_with_parameters(CdnLogs logs, string nick_shop, int dbType, string scheme)
+        {
+            bool result = false;
+            //SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme)));
+            using (SqlConnection conn = new SqlConnection(getConnectionString(Convert.ToInt16(scheme))))
             {
-                s = " DELETE FROM cdn_logs WHERE shop='"+nick_shop+
-                    "' AND num_cash=" +log.NumCash+ 
-                    " AND num_doc="+log.NumDoc+
-                    " AND date_shop='"+log.DateShop+"';";
-                insert_data_cdn.Append(s);
-                s = "INSERT INTO cdn_logs" +
-                    "(shop" +
-                    ",num_cash" +
-                    ",num_doc" +
-                    ",date_shop" +
-                    ",date_insert" +
-                    ",mark" +
-                    ",cdn_answer"+
-                    ",status)" +
-                    " VALUES ('" + nick_shop + "'" +
-                    "," + log.NumCash +
-                    "," + log.NumDoc +
-                    ",'" + log.DateShop + "'" +
-                    ",'" + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + "'" +
-                    ",'" + log.Mark + "'" +
-                    ",'" + log.CdnAnswer + "'"+
-                    ",'" + log.Status + "');";
-                insert_data_cdn.Append(s);
+                conn.Open();
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (CdnLog log in logs.ListCdnLog)
+                        {
+                            // DELETE с параметрами
+                            using (SqlCommand cmdDelete = new SqlCommand(
+                                "DELETE FROM cdn_logs WHERE shop=@shop AND num_cash=@num_cash AND num_doc=@num_doc AND date_shop=@date_shop",
+                                conn, transaction))
+                            {
+                                cmdDelete.Parameters.AddWithValue("@shop", nick_shop);
+                                cmdDelete.Parameters.AddWithValue("@num_cash", log.NumCash);
+                                cmdDelete.Parameters.AddWithValue("@num_doc", log.NumDoc);
+                                cmdDelete.Parameters.AddWithValue("@date_shop", log.DateShop);
+                                cmdDelete.ExecuteNonQuery();
+                            }
+
+                            // INSERT с параметрами
+                            using (SqlCommand cmdInsert = new SqlCommand(
+                                @"INSERT INTO cdn_logs(shop,num_cash,num_doc,date_shop,date_insert,mark,cdn_answer,status) 
+                          VALUES(@shop,@num_cash,@num_doc,@date_shop,@date_insert,@mark,@cdn_answer,@status)",
+                                conn, transaction))
+                            {
+                                cmdInsert.Parameters.AddWithValue("@shop", nick_shop);
+                                cmdInsert.Parameters.AddWithValue("@num_cash", log.NumCash);
+                                cmdInsert.Parameters.AddWithValue("@num_doc", log.NumDoc);
+                                cmdInsert.Parameters.AddWithValue("@date_shop", log.DateShop);
+                                cmdInsert.Parameters.AddWithValue("@date_insert", DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"));
+                                cmdInsert.Parameters.AddWithValue("@mark", (object)log.Mark ?? DBNull.Value);
+                                cmdInsert.Parameters.AddWithValue("@cdn_answer", (object)log.CdnAnswer ?? DBNull.Value);
+                                cmdInsert.Parameters.AddWithValue("@status", log.Status);
+                                cmdInsert.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                        result = true;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
-            //if(insert_data_cdn.ToString().Length>0)
-
-            result = execute_insert_query(insert_data_cdn.ToString(), 2, "4");
-
             return result;
         }
 
@@ -4580,23 +4655,207 @@ namespace DiscountSystem
         /// <param name="data"></param>
         /// <returns></returns>
         [WebMethod]
+        //public bool UploadDataOnSalesPortionJasonAvalon(string nick_shop, string data, string scheme)
+        //{
+        //    bool result = false;
+        //    scheme = "4";
+
+        //    //string code_shop = get_id_database(nick_shop, scheme);
+        //    string code_shop = get_id_database(nick_shop, "4");
+        //    if (code_shop.Trim().Length == 0)
+        //    {
+        //        return result;
+        //    }
+        //    string count_day = CryptorEngine.get_count_day();
+        //    string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
+        //    string s = "";
+        //    StringBuilder query_insert_data_on_sales4 = new StringBuilder();
+
+        //    string decrypt_data = CryptorEngine.Decrypt(data, true, key);
+        //    SalesPortions salesPortions = JsonConvert.DeserializeObject<SalesPortions>(decrypt_data);
+        //    if (Convert.ToDouble(salesPortions.Version) < last_version_cash_program_avalon)
+        //    {
+        //        return result;
+        //    }
+
+        //    // === 1. Создаем список для накопления уникальных номеров касс ===
+        //    HashSet<int> uniqueCashDesks = new HashSet<int>();
+
+        //    if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop.Trim()))
+        //    {
+        //        foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
+        //        {
+        //            // === 2. Накапливаем номер кассы ===
+        //            // Предполагаем, что Num_cash имеет числовой тип (int). 
+        //            // Если это строка, используйте: int.Parse(sph.Num_cash)
+        //            uniqueCashDesks.Add(Convert.ToInt16(sph.Num_cash));
+
+        //            s = "DELETE FROM sales_table WHERE guid='" + sph.Guid + "';";
+        //            query_insert_data_on_sales4.Append(s);
+        //            s = "DELETE FROM sales_header WHERE guid='" + sph.Guid + "';";
+        //            query_insert_data_on_sales4.Append(s);
+        //        }
+
+        //        StringBuilder sb = new StringBuilder();
+        //        //Соберем запрос из шапок документов
+        //        foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
+        //        {
+        //            s = "INSERT INTO sales_header(shop," +
+        //                                       " num_doc," +
+        //                                       "num_cash," +
+        //                                       "card_number," +
+        //                                       "bonus_counted," +
+        //                                       "discount," +
+        //                                       "sum," +
+        //                                       "check_type," +
+        //                                       "have_action," +
+        //                                       "date_time_start," +
+        //                                       "date_time_write," +
+        //                                       "its_deleted," +
+        //                                       "bonus_writen_off," +
+        //                                       "sum_cash," +
+        //                                       "sum_terminal," +
+        //                                       "sum_certificate," +
+        //                                       "autor," +
+        //                                       "comment," +
+        //                                       "version," +
+        //                                       "its_print," +
+        //                                       "transactionId," +
+        //                                       "transactionIdSales," +
+        //                                       "clientInfo_vatin," +
+        //                                       "clientInfo_name," +
+        //                                       "sum_cash_remainder," +
+        //                                       "sales_receipt," +
+        //                                       "sno," +
+        //                                       "sum_cash1," +
+        //                                       "sum_terminal1," +
+        //                                       "sum_certificate1," +
+        //                                       "guid," +
+        //                                       "sbp," +
+        //                                       "card_id)" +
+        //                                       " VALUES('" + sph.Shop + "'," +
+        //                                       sph.Num_doc + "," +
+        //                                       sph.Num_cash + ",'" +
+        //                                       sph.Client + "'," +
+        //                                       sph.Bonus_counted + "," +
+        //                                       sph.Discount + "," +
+        //                                       sph.Sum + "," +
+        //                                       sph.Check_type + ",'" +
+        //                                       sph.Have_action + "','" +
+        //                                       sph.Date_time_start + "','" +
+        //                                       sph.Date_time_write + "'," +
+        //                                       sph.Its_deleted + "," +
+        //                                       sph.Bonus_writen_off + "," +
+        //                                       sph.Sum_cash + "," +
+        //                                       sph.Sum_terminal + "," +
+        //                                       sph.Sum_certificate + ",'" +
+        //                                       sph.Autor + "','" +
+        //                                       sph.Comment + "'," +
+        //                                       salesPortions.Version + "," +
+        //                                       sph.Its_print + ",'" +
+        //                                       sph.Id_transaction + "','" +
+        //                                       sph.Id_transaction_sale + "','" +
+        //                                       sph.ClientInfo_vatin + "','" +
+        //                                       sph.ClientInfo_name + "'," +
+        //                                       sph.SumCashRemainder + ",'" +
+        //                                       sph.NumOrder4 + "'," +
+        //                                       sph.SystemTaxation + "," +
+        //                                       sph.Sum_cash1 + "," +
+        //                                       sph.Sum_terminal1 + "," +
+        //                                       sph.Sum_certificate1 + ",'" +
+        //                                       sph.Guid + "'," +
+        //                                       sph.SBP + ",'" +
+        //                                       sph.ClientPhone + "');";
+        //            query_insert_data_on_sales4.Append(s);
+        //        }
+        //        foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
+        //        {
+        //            s = "INSERT INTO sales_table(shop," +
+        //                                            "num_doc," +
+        //                                            "num_cash," +
+        //                                            "tovar," +
+        //                                            "quantity," +
+        //                                            "price," +
+        //                                            " price_d," +
+        //                                            "sum," +
+        //                                            "sum_d," +
+        //                                            "action1," +
+        //                                            "action2," +
+        //                                            "action3," +
+        //                                            "date_time_write," +
+        //                                            "num_str," +
+        //                                            "bonus_stand," +
+        //                                            "bonus_prom," +
+        //                                            "promotion_b_mover," +
+        //                                            "marking_code," +
+        //                                            "guid)" +
+        //                                    "VALUES('" + spt.Shop + "'," +
+        //                                    spt.Num_doc + "," +
+        //                                    spt.Num_cash + "," +
+        //                                    spt.Tovar + "," +
+        //                                    spt.Quantity + "," +
+        //                                    spt.Price + "," +
+        //                                    spt.Price_d + "," +
+        //                                    spt.Sum + "," +
+        //                                    spt.Sum_d + "," +
+        //                                    spt.Action1 + "," +
+        //                                    spt.Action2 + "," +
+        //                                    spt.Action3 + ",'" +
+        //                                    spt.Date_time_write + "'," +
+        //                                    spt.Num_str + "," +
+        //                                    spt.Bonus_stand + "," +
+        //                                    spt.Bonus_prom + "," +
+        //                                    spt.Promotion_b_mover + ",'" +
+        //                                    spt.MarkingCode + "','" +
+        //                                    spt.Guid + "')";
+
+        //            query_insert_data_on_sales4.Append(s);
+        //        }
+
+        //        // === 3. ПРОВЕРКА ВНИЗУ: Если есть касса > 6, выходим с true ===
+        //        bool hasCashDeskMoreThan6 = false;
+        //        foreach (int cashNum in uniqueCashDesks)
+        //        {
+        //            if (cashNum > 6)
+        //            {
+        //                hasCashDeskMoreThan6 = true;
+        //                break;
+        //            }
+        //        }
+
+        //        if ((nick_shop != "A01")&&(!hasCashDeskMoreThan6))
+        //        {
+        //            result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
+        //        }
+        //        else
+        //        {
+        //            result = true;
+        //        }
+        //    }
+
+        //    return result;
+        //}
+
         public bool UploadDataOnSalesPortionJasonAvalon(string nick_shop, string data, string scheme)
         {
             bool result = false;
             scheme = "4";
-            //string code_shop = get_id_database(nick_shop, scheme);
+
             string code_shop = get_id_database(nick_shop, "4");
             if (code_shop.Trim().Length == 0)
             {
                 return result;
             }
+
             string count_day = CryptorEngine.get_count_day();
             string key = nick_shop.Trim() + count_day.Trim() + code_shop.Trim();
             string s = "";
             StringBuilder query_insert_data_on_sales4 = new StringBuilder();
 
+            // Расшифровка и десериализация
             string decrypt_data = CryptorEngine.Decrypt(data, true, key);
             SalesPortions salesPortions = JsonConvert.DeserializeObject<SalesPortions>(decrypt_data);
+
             if (Convert.ToDouble(salesPortions.Version) < last_version_cash_program_avalon)
             {
                 return result;
@@ -4604,16 +4863,44 @@ namespace DiscountSystem
 
             if ((salesPortions.Shop == nick_shop) && (salesPortions.Guid == code_shop.Trim()))
             {
+                // === 1. Создаем список для накопления уникальных номеров касс ===
+                HashSet<int> uniqueCashDesks = new HashSet<int>();
+
+                // Первый проход: формируем DELETE запросы и собираем номера касс
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
                 {
+                    // Накапливаем номер кассы (конвертируем в int)
+                    uniqueCashDesks.Add(Convert.ToInt16(sph.Num_cash));
+
                     s = "DELETE FROM sales_table WHERE guid='" + sph.Guid + "';";
                     query_insert_data_on_sales4.Append(s);
                     s = "DELETE FROM sales_header WHERE guid='" + sph.Guid + "';";
                     query_insert_data_on_sales4.Append(s);
                 }
 
-                StringBuilder sb = new StringBuilder();
-                //Соберем запрос из шапок документов
+                // === 2. ОПТИМИЗИРОВАННАЯ ПРОВЕРКА ===
+                // Проверяем сразу, есть ли кассы > 6. 
+                // Если есть - выходим, не тратя время на формирование INSERT запросов.
+                bool hasCashDeskMoreThan6 = false;
+                foreach (int cashNum in uniqueCashDesks)
+                {
+                    if (cashNum > 6)
+                    {
+                        hasCashDeskMoreThan6 = true;
+                        break;
+                    }
+                }
+
+                if (hasCashDeskMoreThan6)
+                {
+                    Console.WriteLine("Обнаружена касса с номером > 6. Данные в БД не загружаются (оптимизация).");
+                    return true;
+                }
+                // =====================================
+
+                // Если дошли сюда, значит кассы обычные (<= 6). Формируем INSERT запросы.
+
+                // Сбор запросов из шапок документов
                 foreach (SalesPortionsHeader sph in salesPortions.ListSalesPortionsHeader)
                 {
                     s = "INSERT INTO sales_header(shop," +
@@ -4684,6 +4971,8 @@ namespace DiscountSystem
                                                sph.ClientPhone + "');";
                     query_insert_data_on_sales4.Append(s);
                 }
+
+                // Сбор запросов из таблиц документов
                 foreach (SalesPortionsTable spt in salesPortions.ListSalesPortionsTable)
                 {
                     s = "INSERT INTO sales_table(shop," +
@@ -4728,9 +5017,14 @@ namespace DiscountSystem
                     query_insert_data_on_sales4.Append(s);
                 }
 
+                // Выполнение запроса (проверка на A01)
                 if (nick_shop != "A01")
                 {
                     result = execute_insert_query(query_insert_data_on_sales4.ToString(), 2, "4");
+                }
+                else
+                {
+                    result = true;
                 }
             }
 
